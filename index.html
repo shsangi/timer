@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chrono · Pro Timer & Stopwatch</title>
   <style>
-    /* modern, professional palette — clean neutrals with subtle depth */
     * {
       margin: 0;
       padding: 0;
@@ -23,17 +22,16 @@
     }
 
     .app-card {
-      max-width: 700px;
+      max-width: 760px;
       width: 100%;
-      background: rgba(255,255,255,0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 3rem;
-      box-shadow: 0 30px 50px -20px rgba(0,20,40,0.25),
-                  inset 0 1px 2px rgba(255,255,255,0.8);
-      padding: 2rem 2rem 2rem 2rem;
-      border: 1px solid rgba(255,255,255,0.5);
-      transition: all 0.2s ease;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 2.5rem;
+      box-shadow: 0 30px 50px -20px rgba(0, 20, 40, 0.25),
+                  inset 0 1px 2px rgba(255, 255, 255, 0.8);
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.6);
     }
 
     h1 {
@@ -44,29 +42,29 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      margin-bottom: 1.8rem;
+      margin-bottom: 1.5rem;
       padding-left: 0.25rem;
     }
 
     h1 span {
       background: #1e2b3a;
       color: white;
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 500;
       padding: 0.2rem 0.8rem;
       border-radius: 30px;
       letter-spacing: 0.3px;
     }
 
-    /* ---- timer display area ---- */
+    /* ---- display panel ---- */
     .display-panel {
       background: #ffffffd6;
       backdrop-filter: blur(4px);
-      border-radius: 2.5rem;
-      padding: 1.8rem 1.2rem;
-      box-shadow: inset 0 6px 12px rgba(0,0,0,0.02), 0 8px 18px -8px rgba(0,20,40,0.1);
+      border-radius: 2.2rem;
+      padding: 1.8rem 1.5rem;
+      box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.02), 0 8px 18px -8px rgba(0, 20, 40, 0.1);
       border: 1px solid #ffffff;
-      margin-bottom: 1.6rem;
+      margin-bottom: 1.5rem;
     }
 
     .timestamp-row {
@@ -75,7 +73,7 @@
       justify-content: space-between;
       gap: 0.75rem 1.5rem;
       margin-bottom: 1.2rem;
-      padding: 0 0.4rem;
+      padding: 0 0.2rem;
     }
 
     .timestamp-item {
@@ -85,7 +83,7 @@
     }
 
     .timestamp-label {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.6px;
       font-weight: 600;
@@ -94,19 +92,19 @@
 
     .timestamp-value {
       font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 500;
       color: #1a2b3e;
       background: #f0f4fa;
-      padding: 0.3rem 0.8rem;
+      padding: 0.3rem 0.9rem;
       border-radius: 30px;
       border: 1px solid #d9e2ec;
-      box-shadow: inset 0 1px 2px #ffffff, 0 1px 2px rgba(0,0,0,0.02);
+      box-shadow: inset 0 1px 2px #ffffff, 0 1px 2px rgba(0, 0, 0, 0.02);
       white-space: nowrap;
     }
 
     .main-time {
-      font-size: 3.5rem;
+      font-size: 3.6rem;
       font-weight: 600;
       font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
       color: #0f1a26;
@@ -126,54 +124,135 @@
       letter-spacing: 0.2px;
       background: #eef2f8;
       display: inline-block;
-      padding: 0.25rem 1rem;
+      padding: 0.25rem 1.2rem;
       border-radius: 30px;
       margin: 0 auto 0.2rem;
     }
 
-    /* duration selector */
-    .duration-selector {
+    /* ---- NEW target section ---- */
+    .target-section {
+      background: #f8fafd;
+      border-radius: 1.8rem;
+      padding: 1.2rem 1.2rem 1.2rem 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #e2eaf3;
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(0, 0, 0, 0.02);
+    }
+
+    .target-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .target-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1e2b3a;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .target-label .badge {
+      background: #dbeafe;
+      color: #1e5a7a;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.15rem 0.7rem;
+      border-radius: 30px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .target-mode-toggle {
+      display: flex;
       background: #eef2f8;
-      border-radius: 60px;
-      padding: 0.25rem 0.25rem 0.25rem 1.5rem;
+      border-radius: 40px;
+      padding: 0.2rem;
+      border: 1px solid #d9e2ec;
+    }
+
+    .mode-btn {
+      padding: 0.4rem 1rem;
+      border: none;
+      background: transparent;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #5f6f84;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .mode-btn.active {
+      background: white;
+      color: #1e2b3a;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .quick-durations {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .quick-chip {
+      background: white;
+      border: 1px solid #d9e2ec;
+      border-radius: 40px;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #1e2b3a;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      white-space: nowrap;
+    }
+
+    .quick-chip:hover {
+      background: #eef2f8;
+      border-color: #b0c4d9;
+      transform: translateY(-1px);
+    }
+
+    .quick-chip.active {
+      background: #1e2b3a;
+      color: white;
+      border-color: #1e2b3a;
+      box-shadow: 0 4px 10px -4px #1e2b3a80;
+    }
+
+    .manual-entry {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       flex-wrap: wrap;
-      margin-bottom: 1.8rem;
-      border: 1px solid #d9e2ec;
+      padding-top: 0.5rem;
+      border-top: 1px dashed #d0dae6;
     }
 
-    .duration-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #3a4b60;
-      letter-spacing: 0.2px;
-      white-space: nowrap;
-    }
-
-    .duration-inputs {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      margin-left: auto;
-      flex-wrap: wrap;
-    }
-
-    .duration-field {
+    .manual-entry .field-group {
       display: flex;
       align-items: center;
       background: white;
       border-radius: 40px;
-      padding: 0.1rem 0.2rem 0.1rem 0.8rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+      padding: 0.15rem 0.2rem 0.15rem 0.8rem;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+      border: 1px solid #e2e8f0;
     }
 
-    .duration-field input {
-      width: 60px;
+    .manual-entry input {
+      width: 55px;
       border: none;
       background: transparent;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       color: #1e2b3a;
       font-family: 'SF Mono', monospace;
@@ -182,42 +261,54 @@
       text-align: right;
     }
 
-    .duration-field input::-webkit-outer-spin-button,
-    .duration-field input::-webkit-inner-spin-button {
+    .manual-entry input::-webkit-outer-spin-button,
+    .manual-entry input::-webkit-inner-spin-button {
       -webkit-appearance: none;
       margin: 0;
     }
 
-    .duration-field span {
-      font-size: 0.75rem;
+    .manual-entry .unit {
+      font-size: 0.7rem;
       font-weight: 600;
       color: #6b7b8f;
       padding: 0 0.5rem 0 0.2rem;
       text-transform: uppercase;
     }
 
-    .duration-field input:focus {
-      color: #0d6b9e;
-    }
-
-    .select-wrap {
-      background: white;
-      border-radius: 40px;
-      padding: 0.2rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.02);
-    }
-
-    select {
+    .manual-entry .apply-btn {
+      background: #1e2b3a;
+      color: white;
       border: none;
-      background: transparent;
-      font-size: 0.9rem;
-      font-weight: 500;
-      padding: 0.6rem 1rem 0.6rem 1rem;
       border-radius: 40px;
-      color: #1e2b3a;
-      outline: none;
+      padding: 0.5rem 1.2rem;
+      font-size: 0.8rem;
+      font-weight: 600;
       cursor: pointer;
-      font-family: inherit;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .manual-entry .apply-btn:hover {
+      background: #2a3f54;
+    }
+
+    .manual-entry .apply-btn:disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .target-display {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #1e5a7a;
+      background: #e6f0fa;
+      padding: 0.4rem 1rem;
+      border-radius: 30px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border: 1px solid #cde0f0;
+      margin-top: 0.6rem;
     }
 
     /* buttons */
@@ -242,7 +333,7 @@
       cursor: pointer;
       background: white;
       color: #1e2b3a;
-      box-shadow: 0 6px 12px -6px rgba(0,20,40,0.1), 0 2px 4px rgba(0,0,0,0.02);
+      box-shadow: 0 6px 12px -6px rgba(0, 20, 40, 0.1), 0 2px 4px rgba(0, 0, 0, 0.02);
       transition: all 0.2s ease;
       border: 1px solid #e2e8f0;
       letter-spacing: 0.2px;
@@ -251,21 +342,21 @@
 
     .btn:hover {
       background: #f8fafd;
-      box-shadow: 0 10px 18px -8px rgba(0,80,120,0.15);
+      box-shadow: 0 10px 18px -8px rgba(0, 80, 120, 0.15);
       transform: translateY(-1px);
       border-color: #cbd5e0;
     }
 
     .btn:active {
       transform: translateY(1px);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     }
 
     .btn.primary {
       background: #1e2b3a;
       color: white;
       border-color: #1e2b3a;
-      box-shadow: 0 10px 20px -8px #1e2b3a80, 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 20px -8px #1e2b3a80, 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     .btn.primary:hover {
@@ -332,13 +423,18 @@
       letter-spacing: 0.2px;
     }
 
-    /* responsive */
-    @media (max-width: 500px) {
-      .app-card { padding: 1.5rem 1rem; border-radius: 2rem; }
-      .main-time { font-size: 2.5rem; }
-      .duration-selector { flex-direction: column; align-items: flex-start; padding: 1rem; }
-      .duration-inputs { margin-left: 0; width: 100%; }
+    @media (max-width: 600px) {
+      .app-card { padding: 1.25rem; border-radius: 2rem; }
+      .main-time { font-size: 2.6rem; }
+      .timestamp-value { font-size: 0.8rem; padding: 0.2rem 0.7rem; }
+      .target-section { padding: 1rem; }
+      .manual-entry .field-group input { width: 45px; }
+    }
+
+    @media (max-width: 420px) {
+      .main-time { font-size: 2.2rem; }
       .btn { padding: 0.8rem 0.8rem; font-size: 0.9rem; }
+      .quick-chip { padding: 0.35rem 0.8rem; font-size: 0.75rem; }
     }
   </style>
 </head>
@@ -359,30 +455,59 @@
         </div>
       </div>
 
-      <!-- main elapsed / stopwatch display -->
       <div class="main-time" id="mainDisplay">00:00:00</div>
       <div class="sub-time" id="subDisplay">hours : minutes : seconds</div>
 
-      <!-- running / status indicator -->
       <div id="statusIndicator" class="status-badge">⏸️ IDLE</div>
     </div>
 
-    <!-- duration selector: 0–16 hours, 0–59 minutes, 0–59 seconds (min 30s total) -->
-    <div class="duration-selector">
-      <span class="duration-label">🎯 Target duration</span>
-      <div class="duration-inputs">
-        <div class="duration-field">
+    <!-- NEW target section -->
+    <div class="target-section">
+      <div class="target-header">
+        <div class="target-label">
+          🎯 Target
+          <span class="badge" id="targetModeBadge">Manual</span>
+        </div>
+        <div class="target-mode-toggle">
+          <button class="mode-btn active" id="modeManual">Manual</button>
+          <button class="mode-btn" id="modeQuick">Quick</button>
+        </div>
+      </div>
+
+      <!-- Quick duration chips (always visible, but only used in quick mode) -->
+      <div class="quick-durations" id="quickChips">
+        <button class="quick-chip" data-sec="600">10 min</button>
+        <button class="quick-chip" data-sec="1800">30 min</button>
+        <button class="quick-chip" data-sec="5400">90 min</button>
+        <button class="quick-chip" data-sec="3600">1 hour</button>
+        <button class="quick-chip" data-sec="7200">2 hour</button>
+        <button class="quick-chip" data-sec="9000">2.5 h</button>
+        <button class="quick-chip" data-sec="10800">3 h</button>
+        <button class="quick-chip" data-sec="21600">6 h</button>
+        <button class="quick-chip" data-sec="43200">12 h</button>
+      </div>
+
+      <!-- Manual entry (visible only in manual mode) -->
+      <div class="manual-entry" id="manualEntry">
+        <div class="field-group">
           <input type="number" id="hoursInput" min="0" max="16" value="0" step="1">
-          <span>h</span>
+          <span class="unit">h</span>
         </div>
-        <div class="duration-field">
+        <div class="field-group">
           <input type="number" id="minutesInput" min="0" max="59" value="0" step="1">
-          <span>m</span>
+          <span class="unit">m</span>
         </div>
-        <div class="duration-field">
+        <div class="field-group">
           <input type="number" id="secondsInput" min="0" max="59" value="30" step="1">
-          <span>s</span>
+          <span class="unit">s</span>
         </div>
+        <button class="apply-btn" id="applyManual">Apply</button>
+      </div>
+
+      <!-- Current target display -->
+      <div class="target-display" id="targetDisplay">
+        <span>⏱️</span>
+        <span id="targetText">Keep running until stopped</span>
       </div>
     </div>
 
@@ -393,7 +518,6 @@
       <button class="btn outline" id="clearBtn">🧹 Clear</button>
     </div>
 
-    <!-- subtle helper -->
     <div class="footer-note">
       keep running in background · timestamps update live
     </div>
@@ -402,12 +526,15 @@
   <script>
     (function() {
       // ---- state ----
-      let startTime = null;            // Date object when started
-      let endTime = null;             // Date object when stopped
+      let startTime = null;
+      let endTime = null;
       let timerInterval = null;
       let isRunning = false;
-      let elapsedSeconds = 0;          // used for stopwatch display
-      let lastTickTime = null;
+      let elapsedSeconds = 0;
+
+      // Target mode: 'manual' | 'quick' | 'none'
+      let targetMode = 'none';           // default: none (keep running until stopped)
+      let targetDurationSec = 0;         // 0 means no target
 
       // DOM elements
       const startTimestampEl = document.getElementById('startTimestamp');
@@ -423,11 +550,19 @@
       const hoursInput = document.getElementById('hoursInput');
       const minutesInput = document.getElementById('minutesInput');
       const secondsInput = document.getElementById('secondsInput');
+      const applyManualBtn = document.getElementById('applyManual');
+      const targetText = document.getElementById('targetText');
+      const targetModeBadge = document.getElementById('targetModeBadge');
+
+      const modeManualBtn = document.getElementById('modeManual');
+      const modeQuickBtn = document.getElementById('modeQuick');
+      const quickChipsContainer = document.getElementById('quickChips');
+      const manualEntryDiv = document.getElementById('manualEntry');
+      const quickChips = document.querySelectorAll('.quick-chip');
 
       // ---- helpers ----
       function formatTimestamp(date) {
         if (!date) return '—';
-        // format: YYYY-MM-DD HH:MM:SS (professional ISO-like)
         const y = date.getFullYear();
         const mo = String(date.getMonth() + 1).padStart(2, '0');
         const d = String(date.getDate()).padStart(2, '0');
@@ -437,7 +572,6 @@
         return `${y}-${mo}-${d} ${h}:${mi}:${s}`;
       }
 
-      // Convert seconds to HH:MM:SS (with leading zeros)
       function secondsToHMS(totalSeconds) {
         totalSeconds = Math.floor(totalSeconds);
         const hrs = Math.floor(totalSeconds / 3600);
@@ -450,118 +584,170 @@
         };
       }
 
-      // Update main display from elapsed seconds
       function updateMainDisplayFromSeconds(totalSec) {
         const { h, m, s } = secondsToHMS(totalSec);
         mainDisplay.textContent = `${h}:${m}:${s}`;
         subDisplay.textContent = `${h} hours · ${m} minutes · ${s} seconds`;
       }
 
-      // get total target duration in seconds from inputs
-      function getTargetDurationSeconds() {
+      // Update target display text
+      function updateTargetDisplay() {
+        if (targetMode === 'none' || targetDurationSec <= 0) {
+          targetText.textContent = 'Keep running until stopped';
+          targetModeBadge.textContent = 'Manual';
+          targetModeBadge.style.background = '#dbeafe';
+          targetModeBadge.style.color = '#1e5a7a';
+        } else {
+          const { h, m, s } = secondsToHMS(targetDurationSec);
+          // Build a friendly string
+          let parts = [];
+          if (parseInt(h) > 0) parts.push(`${parseInt(h)}h`);
+          if (parseInt(m) > 0) parts.push(`${parseInt(m)}m`);
+          if (parseInt(s) > 0) parts.push(`${parseInt(s)}s`);
+          if (parts.length === 0) parts.push('0s');
+          targetText.textContent = `Stop after ${parts.join(' ')}`;
+          targetModeBadge.textContent = 'Active';
+          targetModeBadge.style.background = '#e2f3e6';
+          targetModeBadge.style.color = '#166534';
+        }
+      }
+
+      // Get target seconds from manual inputs
+      function getManualTargetSeconds() {
         const h = parseInt(hoursInput.value, 10) || 0;
         const m = parseInt(minutesInput.value, 10) || 0;
         const s = parseInt(secondsInput.value, 10) || 0;
         return (h * 3600) + (m * 60) + s;
       }
 
-      // validate & enforce duration constraints: 30 sec to 16h
-      function enforceDurationLimits() {
+      // Enforce duration limits for manual inputs (0-16h, 0-59m, 0-59s, min 0 allowed)
+      function enforceManualLimits() {
         let h = parseInt(hoursInput.value, 10) || 0;
         let m = parseInt(minutesInput.value, 10) || 0;
         let s = parseInt(secondsInput.value, 10) || 0;
 
-        // clamp individual fields
         h = Math.min(16, Math.max(0, h));
         m = Math.min(59, Math.max(0, m));
         s = Math.min(59, Math.max(0, s));
 
-        // total seconds
-        let totalSec = h * 3600 + m * 60 + s;
-        const MIN_SEC = 30;
-        const MAX_SEC = 16 * 3600; // 57600
-
-        if (totalSec < MIN_SEC) {
-          totalSec = MIN_SEC;
-        } else if (totalSec > MAX_SEC) {
-          totalSec = MAX_SEC;
-        }
-
-        // redistribute back to fields
-        const newH = Math.floor(totalSec / 3600);
-        const newM = Math.floor((totalSec % 3600) / 60);
-        const newS = totalSec % 60;
-
-        hoursInput.value = newH;
-        minutesInput.value = newM;
-        secondsInput.value = newS;
+        hoursInput.value = h;
+        minutesInput.value = m;
+        secondsInput.value = s;
       }
 
-      // attach input events for live clamping (but avoid annoying jumps)
-      [hoursInput, minutesInput, secondsInput].forEach(input => {
-        input.addEventListener('change', enforceDurationLimits);
-        input.addEventListener('blur', enforceDurationLimits);
-      });
+      // Apply manual target
+      function applyManualTarget() {
+        enforceManualLimits();
+        const totalSec = getManualTargetSeconds();
+        if (totalSec > 0) {
+          targetMode = 'manual';
+          targetDurationSec = totalSec;
+          // Deactivate quick chips
+          quickChips.forEach(chip => chip.classList.remove('active'));
+        } else {
+          targetMode = 'none';
+          targetDurationSec = 0;
+        }
+        updateTargetDisplay();
+        updateModeUI();
+      }
+
+      // Apply quick target from chip
+      function applyQuickTarget(seconds, chipElement) {
+        // Toggle: if same chip is active, deactivate (set to none)
+        if (chipElement.classList.contains('active')) {
+          chipElement.classList.remove('active');
+          targetMode = 'none';
+          targetDurationSec = 0;
+        } else {
+          // Remove active from all chips
+          quickChips.forEach(c => c.classList.remove('active'));
+          chipElement.classList.add('active');
+          targetMode = 'quick';
+          targetDurationSec = seconds;
+          // Also update manual fields to reflect this for consistency
+          const h = Math.floor(seconds / 3600);
+          const m = Math.floor((seconds % 3600) / 60);
+          const s = seconds % 60;
+          hoursInput.value = h;
+          minutesInput.value = m;
+          secondsInput.value = s;
+        }
+        updateTargetDisplay();
+        updateModeUI();
+      }
+
+      // Update UI based on mode (manual vs quick)
+      function updateModeUI() {
+        if (targetMode === 'quick') {
+          modeQuickBtn.classList.add('active');
+          modeManualBtn.classList.remove('active');
+          manualEntryDiv.style.display = 'none';
+          quickChipsContainer.style.display = 'flex';
+        } else {
+          // manual or none
+          modeManualBtn.classList.add('active');
+          modeQuickBtn.classList.remove('active');
+          manualEntryDiv.style.display = 'flex';
+          quickChipsContainer.style.display = 'flex'; // still show for reference
+        }
+        // Update badge
+        if (targetMode === 'none') {
+          targetModeBadge.textContent = 'Manual';
+          targetModeBadge.style.background = '#dbeafe';
+          targetModeBadge.style.color = '#1e5a7a';
+        } else if (targetMode === 'quick') {
+          targetModeBadge.textContent = 'Quick';
+          targetModeBadge.style.background = '#fef3c7';
+          targetModeBadge.style.color = '#92400e';
+        } else {
+          targetModeBadge.textContent = 'Manual';
+          targetModeBadge.style.background = '#dbeafe';
+          targetModeBadge.style.color = '#1e5a7a';
+        }
+      }
 
       // ---- core timer logic ----
       function startTimer() {
         if (isRunning) return;
 
-        // if there is an existing end timestamp (stopped state), reset end and continue?
-        // we want a fresh start. So clear end timestamp, reset elapsed, set new start.
-        // However, to preserve "resume" behaviour? The spec doesn't ask. We'll start fresh clean.
-        if (endTime !== null) {
-          // if we were stopped and press start again → treat as new session.
-          endTime = null;
-          endTimestampEl.textContent = '—';
-        }
-
-        // set start time to now
-        startTime = new Date();
-        startTimestampEl.textContent = formatTimestamp(startTime);
+        // Reset end time if any
         endTime = null;
         endTimestampEl.textContent = '—';
 
-        // reset elapsed seconds (we'll compute from start time)
+        startTime = new Date();
+        startTimestampEl.textContent = formatTimestamp(startTime);
+
         elapsedSeconds = 0;
         updateMainDisplayFromSeconds(0);
 
         isRunning = true;
         updateButtonsAndStatus();
 
-        // record tick time for background-safe delta
-        lastTickTime = Date.now();
-
-        // start interval (1s)
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
           if (!isRunning || !startTime) return;
 
-          // Background-safe: use Date difference so it stays accurate even if tab inactive
           const now = Date.now();
           const startMs = startTime.getTime();
           const diffSec = Math.floor((now - startMs) / 1000);
           elapsedSeconds = diffSec;
           updateMainDisplayFromSeconds(elapsedSeconds);
 
-          // check if target duration is reached (optional: could auto-stop)
-          const targetSec = getTargetDurationSeconds();
-          if (targetSec > 0 && elapsedSeconds >= targetSec) {
-            // auto-stop if target reached
-            stopTimer(true); // silent flag to avoid double stop
+          // Auto-stop if target active and reached
+          if (targetDurationSec > 0 && elapsedSeconds >= targetDurationSec) {
+            stopTimer(true);
           }
-        }, 200); // update frequently for smoothness (200ms)
+        }, 200);
       }
 
       function stopTimer(isAuto = false) {
         if (!isRunning && !isAuto) return;
-        if (!isRunning && isAuto) return; // already stopped
+        if (!isRunning && isAuto) return;
 
-        // capture end time
         endTime = new Date();
         endTimestampEl.textContent = formatTimestamp(endTime);
 
-        // stop the interval
         if (timerInterval) {
           clearInterval(timerInterval);
           timerInterval = null;
@@ -570,31 +756,24 @@
         isRunning = false;
         updateButtonsAndStatus();
 
-        // ensure the main display shows final elapsed time
         if (startTime) {
           const diffSec = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
           elapsedSeconds = diffSec;
-          updateMainDisplayFromSeconds(elapsedSeconds);
-        } else {
-          // fallback
           updateMainDisplayFromSeconds(elapsedSeconds);
         }
       }
 
       function clearAll() {
-        // stop any running timer
         if (timerInterval) {
           clearInterval(timerInterval);
           timerInterval = null;
         }
 
-        // reset state
         isRunning = false;
         startTime = null;
         endTime = null;
         elapsedSeconds = 0;
 
-        // reset UI
         startTimestampEl.textContent = '—';
         endTimestampEl.textContent = '—';
         mainDisplay.textContent = '00:00:00';
@@ -602,18 +781,19 @@
         statusIndicator.textContent = '⏸️ IDLE';
         statusIndicator.classList.remove('running');
 
-        // reset duration to default 30s (0h 0m 30s)
+        // Reset target to default: no target, keep running until stopped
+        targetMode = 'none';
+        targetDurationSec = 0;
+        quickChips.forEach(c => c.classList.remove('active'));
+
+        // Reset manual inputs to 0h 0m 30s but targetMode none means they are ignored
         hoursInput.value = 0;
         minutesInput.value = 0;
         secondsInput.value = 30;
-        enforceDurationLimits(); // ensure valid (30s stays 30s)
+        enforceManualLimits();
 
-        // clear any remaining interval
-        if (timerInterval) {
-          clearInterval(timerInterval);
-          timerInterval = null;
-        }
-
+        updateTargetDisplay();
+        updateModeUI();
         updateButtonsAndStatus();
       }
 
@@ -633,10 +813,7 @@
 
       // ---- event listeners ----
       startBtn.addEventListener('click', () => {
-        // if already running, ignore
         if (isRunning) return;
-        // if there is an end time (stopped state), we might want to keep old? 
-        // but we want fresh start. startTimer handles resetting end.
         startTimer();
       });
 
@@ -649,19 +826,88 @@
         clearAll();
       });
 
-      // when duration inputs change, if running, check if we've already exceeded target?
-      // not needed, but we can enforce limits
-      [hoursInput, minutesInput, secondsInput].forEach(inp => {
-        inp.addEventListener('input', () => {
-          // clamp values live but not harshly (only on blur/change)
-          // for better UX, enforce on change/blur (already set)
+      // Mode toggle
+      modeManualBtn.addEventListener('click', () => {
+        // Switch to manual mode, but keep target value if it was set manually or quick
+        // We'll set targetMode to 'manual' if there's a valid duration, else none
+        if (targetDurationSec > 0) {
+          targetMode = 'manual';
+        } else {
+          targetMode = 'none';
+        }
+        // Clear active chips
+        quickChips.forEach(c => c.classList.remove('active'));
+        updateModeUI();
+        updateTargetDisplay();
+      });
+
+      modeQuickBtn.addEventListener('click', () => {
+        // Switch to quick mode; if no chip active, don't set target
+        const activeChip = document.querySelector('.quick-chip.active');
+        if (activeChip) {
+          targetMode = 'quick';
+          targetDurationSec = parseInt(activeChip.dataset.sec, 10);
+        } else {
+          targetMode = 'quick';
+          targetDurationSec = 0;
+        }
+        updateModeUI();
+        updateTargetDisplay();
+      });
+
+      // Quick chip clicks
+      quickChips.forEach(chip => {
+        chip.addEventListener('click', (e) => {
+          const sec = parseInt(chip.dataset.sec, 10);
+          if (targetMode !== 'quick') {
+            // switch to quick mode when clicking a chip
+            targetMode = 'quick';
+            updateModeUI();
+          }
+          applyQuickTarget(sec, chip);
         });
       });
 
-      // handle page visibility changes to maintain accuracy (but we already use Date diff)
-      // so no extra needed. The interval will keep updating if page visible; if hidden, 
-      // the time will jump forward on next tick but still correct.
-      // optional: update immediately on visibility regain
+      // Apply manual button
+      applyManualBtn.addEventListener('click', () => {
+        // If we're in quick mode, switch to manual
+        if (targetMode === 'quick') {
+          targetMode = 'manual';
+          quickChips.forEach(c => c.classList.remove('active'));
+          updateModeUI();
+        }
+        applyManualTarget();
+      });
+
+      // Enforce limits on blur/change
+      [hoursInput, minutesInput, secondsInput].forEach(input => {
+        input.addEventListener('change', () => {
+          enforceManualLimits();
+          // If in manual mode, auto-apply? No, user must click Apply. But we can update if targetMode manual? 
+          // Better UX: if in manual mode and user changes values, we don't auto-apply, but we could.
+          // Let's keep Apply button for explicit action.
+        });
+        input.addEventListener('blur', () => {
+          enforceManualLimits();
+        });
+      });
+
+      // Handle Enter key on inputs to apply
+      [hoursInput, minutesInput, secondsInput].forEach(input => {
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (targetMode === 'quick') {
+              targetMode = 'manual';
+              quickChips.forEach(c => c.classList.remove('active'));
+              updateModeUI();
+            }
+            applyManualTarget();
+          }
+        });
+      });
+
+      // Visibility change to keep time accurate
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && isRunning && startTime) {
           const now = Date.now();
@@ -671,18 +917,15 @@
         }
       });
 
-      // initialize display
-      clearAll(); // sets everything to zero, 30s default
+      // ---- init ----
+      function init() {
+        clearAll(); // sets everything to default (target none)
+        // Ensure default display shows keep running
+        updateTargetDisplay();
+        updateModeUI();
+      }
 
-      // ensure initial duration constraints (30s min)
-      enforceDurationLimits();
-
-      // prefill start/end placeholders
-      startTimestampEl.textContent = '—';
-      endTimestampEl.textContent = '—';
-
-      // if user manually changes duration while running, we don't auto-stop, but target changes.
-      // no problem.
+      init();
     })();
   </script>
 </body>
