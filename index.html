@@ -12,14 +12,19 @@
 
   <!--
     ═══════════════════════════════════════════════════════════
-    CHRONO — v1.8.0
+    CHRONO — v1.8.1
     ═══════════════════════════════════════════════════════════
-    • Timer on ONE line, no clipping (fits inside card)
-    • Report is now a POPUP MODAL (works for manual AND auto stop)
-    • Floating FAB: Delete / Pause / Resume
-    • Top button: Start ⇄ Stop only
-    • Filter icon → target popup
-    • Version bottom-left
+    FIX: Report popup now reliably appears on BOTH manual stop
+         and auto-stop (target reached).
+
+    Root cause in v1.8.0: `showReport()` was called, but the
+    `startTime` was nulled BEFORE the call in stopTimer(), and
+    the guard `if (!endTime || !startTime) return;` prevented
+    the popup from ever being shown.
+
+    Fix: capture startTime into a local variable before nulling
+    it, and use a dedicated `sessionStart` / `sessionEnd` pair
+    for the report content.
     ═══════════════════════════════════════════════════════════
   -->
 
@@ -138,9 +143,7 @@
     .install-btn.visible { display: inline-flex; }
     .install-btn:hover { background: #d4e6f7; }
 
-    /* ═══════════════════════════════════════════════════════
-       HUGE TIME — always one line, fits inside card, no clipping
-       ═══════════════════════════════════════════════════════ */
+    /* ---------- timer ---------- */
     .timer-wrap {
       width: 100%;
       padding: 0.5rem 0 1.2rem;
@@ -159,8 +162,6 @@
       letter-spacing: -0.02em;
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum";
-
-      /* Fit inside card width — no clipping, no wrapping */
       font-size: clamp(2.2rem, 15vw, 5.5rem);
       width: 100%;
       max-width: 100%;
@@ -190,7 +191,7 @@
 
     .target-pill.visible { display: inline-flex; }
 
-    /* ---------- main toggle (Start ⇄ Stop) ---------- */
+    /* ---------- main toggle ---------- */
     .toggle-btn {
       width: 100%;
       padding: 1.15rem 1.25rem;
@@ -226,123 +227,6 @@
 
     .toggle-btn .btn-icon { font-size: 1.3rem; line-height: 1; }
 
-    /* ═══════════════════════════════════════════════════════
-       REPORT MODAL (popup for both manual & auto stop)
-       ═══════════════════════════════════════════════════════ */
-    .report-sheet {
-      max-width: 440px;
-    }
-
-    .report-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      padding-bottom: 0.85rem;
-      border-bottom: 1px solid #e2eaf3;
-    }
-
-    .report-title {
-      font-size: 0.75rem;
-      font-weight: 800;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-      color: #1e5a7a;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .report-status {
-      font-size: 0.65rem;
-      font-weight: 800;
-      letter-spacing: 0.4px;
-      text-transform: uppercase;
-      padding: 0.25rem 0.75rem;
-      border-radius: 30px;
-      background: #e2f3e6;
-      color: #166534;
-      border: 1px solid #b7e0c4;
-      font-family: 'SF Mono', monospace;
-    }
-
-    .report-status.miss {
-      background: #fee2e2;
-      color: #991b1b;
-      border-color: #fecaca;
-    }
-
-    .report-total {
-      text-align: center;
-      padding: 0.35rem 0 1rem;
-      border-bottom: 1px dashed #d0dae6;
-      margin-bottom: 1rem;
-    }
-
-    .report-total-label {
-      font-size: 0.62rem;
-      font-weight: 700;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-      color: #8b9aad;
-      margin-bottom: 0.4rem;
-    }
-
-    .report-total-time {
-      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 2.6rem;
-      font-weight: 700;
-      color: #166534;
-      line-height: 1;
-      letter-spacing: -0.01em;
-      white-space: nowrap;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .report-total-human {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #5f6f84;
-      margin-top: 0.4rem;
-    }
-
-    .report-details {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-    }
-
-    .report-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 0.75rem;
-    }
-
-    .report-row .r-label {
-      font-size: 0.62rem;
-      font-weight: 700;
-      letter-spacing: 0.7px;
-      text-transform: uppercase;
-      color: #8b9aad;
-      flex-shrink: 0;
-    }
-
-    .report-row .r-value {
-      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #1a2b3e;
-      text-align: right;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .report-row .r-value.green { color: #166534; }
-    .report-row .r-value.red   { color: #991b1b; }
-
     /* ---------- version ---------- */
     .version-corner {
       position: fixed;
@@ -363,9 +247,7 @@
       -webkit-backdrop-filter: blur(6px);
     }
 
-    /* ═══════════════════════════════════════════════════════
-       FLOATING BUTTON
-       ═══════════════════════════════════════════════════════ */
+    /* ---------- FAB ---------- */
     .fab {
       position: fixed;
       bottom: 1.75rem;
@@ -446,7 +328,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 26, 38, 0.5);
+      background: rgba(15, 26, 38, 0.55);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       display: none;
@@ -470,7 +352,7 @@
       width: 100%;
       box-shadow: 0 40px 80px -20px rgba(0, 20, 40, 0.45);
       animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      max-height: 85vh;
+      max-height: 88vh;
       overflow-y: auto;
     }
 
@@ -666,6 +548,114 @@
       line-height: 1.5;
     }
 
+    /* ---------- report-specific ---------- */
+    .report-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid #e2eaf3;
+    }
+
+    .report-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #1e5a7a;
+    }
+
+    .report-status {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      padding: 0.25rem 0.75rem;
+      border-radius: 30px;
+      background: #e2f3e6;
+      color: #166534;
+      border: 1px solid #b7e0c4;
+      font-family: 'SF Mono', monospace;
+    }
+
+    .report-status.miss {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
+    .report-total {
+      text-align: center;
+      padding: 0.35rem 0 1rem;
+      border-bottom: 1px dashed #d0dae6;
+      margin-bottom: 1rem;
+    }
+
+    .report-total-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #8b9aad;
+      margin-bottom: 0.4rem;
+    }
+
+    .report-total-time {
+      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: #166534;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .report-total-human {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #5f6f84;
+      margin-top: 0.4rem;
+    }
+
+    .report-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .report-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .report-row .r-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: #8b9aad;
+      flex-shrink: 0;
+    }
+
+    .report-row .r-value {
+      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #1a2b3e;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .report-row .r-value.green { color: #166534; }
+    .report-row .r-value.red   { color: #991b1b; }
+
     /* install toast */
     .install-toast {
       position: fixed;
@@ -729,7 +719,6 @@
       <button class="install-btn" id="installBtn" title="Install app">⬇️ Install</button>
     </div>
 
-    <!-- timer wrapper keeps time strictly inside card -->
     <div class="timer-wrap">
       <div class="main-time" id="mainDisplay">00:00:00</div>
     </div>
@@ -745,10 +734,8 @@
     </button>
   </div>
 
-  <!-- version bottom-left -->
-  <div class="version-corner" id="versionCorner">v1.8.0</div>
+  <div class="version-corner" id="versionCorner">v1.8.1</div>
 
-  <!-- floating contextual button -->
   <button class="fab delete" id="fab" title="Delete">
     <span class="fab-tip" id="fabTip">Delete</span>
     <svg id="fabIcon" viewBox="0 0 24 24">
@@ -760,7 +747,7 @@
     </svg>
   </button>
 
-  <!-- ═══ TARGET MODAL ═══ -->
+  <!-- TARGET MODAL -->
   <div class="modal-overlay" id="targetModal">
     <div class="modal-sheet">
       <div class="modal-handle"></div>
@@ -802,9 +789,9 @@
     </div>
   </div>
 
-  <!-- ═══ REPORT MODAL (popup) ═══ -->
+  <!-- REPORT MODAL -->
   <div class="modal-overlay center" id="reportModal">
-    <div class="modal-sheet report-sheet">
+    <div class="modal-sheet">
       <div class="report-header">
         <div class="report-title">📋 Session report</div>
         <div class="report-status" id="reportStatus">Completed</div>
@@ -842,7 +829,7 @@
     </div>
   </div>
 
-  <!-- ═══ DELETE MODAL ═══ -->
+  <!-- DELETE MODAL -->
   <div class="modal-overlay center" id="deleteModal">
     <div class="modal-sheet modal-center">
       <div class="modal-icon">
@@ -863,14 +850,13 @@
     </div>
   </div>
 
-  <!-- install toast -->
   <div class="install-toast" id="installToast">
     <span>📲 Install Chrono</span>
     <button id="installToastBtn">Install</button>
   </div>
 
   <script>
-    const APP_VERSION = '1.8.0';
+    const APP_VERSION = '1.8.1';
     const STORAGE_KEY = 'chronoPro.state';
 
     /* ---------- inline PWA manifest ---------- */
@@ -979,16 +965,19 @@
        ═══════════════════════════════════════════════════════════ */
     (function timerApp() {
       let mode = 'idle';
-      let startTime = null;
+      let startTime = null;         // current run's start (null while paused)
       let endTime = null;
       let elapsedSeconds = 0;
       let accumulatedMs = 0;
       let timerInterval = null;
       let targetDurationSec = 0;
 
+      // session report data (captured at stop time, before we null startTime)
+      let sessionStart = null;
+      let sessionEnd = null;
+
       /* DOM */
       const mainDisplay = document.getElementById('mainDisplay');
-
       const toggleBtn = document.getElementById('toggleBtn');
       const toggleIcon = document.getElementById('toggleIcon');
       const toggleLabel = document.getElementById('toggleLabel');
@@ -1062,6 +1051,8 @@
             mode,
             startTime: startTime ? startTime.getTime() : null,
             endTime: endTime ? endTime.getTime() : null,
+            sessionStart: sessionStart ? sessionStart.getTime() : null,
+            sessionEnd: sessionEnd ? sessionEnd.getTime() : null,
             accumulatedMs,
             elapsedSeconds,
             targetDurationSec,
@@ -1079,6 +1070,8 @@
 
           if (s.startTime) startTime = new Date(s.startTime);
           if (s.endTime) endTime = new Date(s.endTime);
+          if (s.sessionStart) sessionStart = new Date(s.sessionStart);
+          if (s.sessionEnd) sessionEnd = new Date(s.sessionEnd);
           accumulatedMs = s.accumulatedMs || 0;
           elapsedSeconds = s.elapsedSeconds || 0;
           targetDurationSec = s.targetDurationSec || 0;
@@ -1131,11 +1124,7 @@
         const h = Math.floor(totalSeconds / 3600);
         const m = Math.floor((totalSeconds % 3600) / 60);
         const s = totalSeconds % 60;
-        const parts = [];
-        parts.push(`${h} hour${h !== 1 ? 's' : ''}`);
-        parts.push(`${m} minute${m !== 1 ? 's' : ''}`);
-        parts.push(`${s} second${s !== 1 ? 's' : ''}`);
-        return parts.join(' · ');
+        return `${h} hour${h !== 1 ? 's' : ''} · ${m} minute${m !== 1 ? 's' : ''} · ${s} second${s !== 1 ? 's' : ''}`;
       }
 
       function targetLabel(sec) {
@@ -1147,7 +1136,7 @@
         if (h > 0) parts.push(`${h}h`);
         if (m > 0) parts.push(`${m}m`);
         if (s > 0) parts.push(`${s}s`);
-        return parts.join(' ');
+        return parts.join(' ') || 'None';
       }
 
       /* ---------- UI updaters ---------- */
@@ -1212,14 +1201,17 @@
 
       /* ---------- report popup ---------- */
       function showReport() {
-        if (!endTime || !startTime) return;
+        // Guard against missing session data
+        if (!sessionStart || !sessionEnd) {
+          console.warn('[report] missing session data', { sessionStart, sessionEnd });
+          return;
+        }
 
         const totalSec = elapsedSeconds;
         reportTotalTime.textContent = secondsToHMS(totalSec);
         reportTotalHuman.textContent = humanDuration(totalSec);
-
-        reportStart.textContent = formatTimestamp(startTime);
-        reportEnd.textContent = formatTimestamp(endTime);
+        reportStart.textContent = formatTimestamp(sessionStart);
+        reportEnd.textContent = formatTimestamp(sessionEnd);
 
         if (targetDurationSec > 0) {
           reportTarget.textContent = targetLabel(targetDurationSec);
@@ -1245,7 +1237,10 @@
           reportStatus.classList.remove('miss');
         }
 
-        reportModal.classList.add('show');
+        // Small delay so the timer UI updates first, then popup slides in
+        requestAnimationFrame(() => {
+          reportModal.classList.add('show');
+        });
       }
 
       function closeReport() { reportModal.classList.remove('show'); }
@@ -1256,6 +1251,8 @@
         accumulatedMs = 0;
         elapsedSeconds = 0;
         startTime = new Date();
+        sessionStart = startTime;   // capture for later report
+        sessionEnd = null;
         endTime = null;
         mode = 'running';
         closeReport();
@@ -1293,22 +1290,31 @@
       }
 
       function stopTimer() {
-        if (mode === 'running') {
+        // Capture the run's elapsed
+        if (mode === 'running' && startTime) {
           accumulatedMs += Date.now() - startTime.getTime();
           elapsedSeconds = Math.floor(accumulatedMs / 1000);
         } else if (mode !== 'paused') {
           return;
         }
+
         clearInterval(timerInterval);
         timerInterval = null;
-        endTime = new Date();
+
+        // Capture session end AND ensure session start exists
+        sessionEnd = new Date();
+        if (!sessionStart) sessionStart = sessionEnd;   // fallback safety
+
+        endTime = sessionEnd;
         mode = 'stopped';
         startTime = null;
+
         updateMainDisplay();
         updateToggleUI();
         updateFabUI();
         saveState();
-        // Popup report — works for BOTH manual and auto stop
+
+        // Show the report popup — works for manual & auto stop
         showReport();
       }
 
@@ -1432,6 +1438,8 @@
         mode = 'idle';
         startTime = null;
         endTime = null;
+        sessionStart = null;
+        sessionEnd = null;
         elapsedSeconds = 0;
         accumulatedMs = 0;
         targetDurationSec = 0;
