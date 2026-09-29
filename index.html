@@ -2,30 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#1e2b3a">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- Light theme color so browser bar is not black -->
+  <meta name="theme-color" content="#f5f7fc">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Chrono">
   <meta name="mobile-web-app-capable" content="yes">
   <title>Chrono</title>
 
   <!--
     ═══════════════════════════════════════════════════════════
-    CHRONO — INSTALLABLE PWA (ALL-IN-ONE FILE)
-    Version 1.4.0
+    CHRONO — v1.5.0
     ═══════════════════════════════════════════════════════════
-    Floating action button (bottom-right) is CONTEXTUAL:
-
-      mode = 'idle'    → ❌ Delete  (nothing to delete; prompts confirm)
-      mode = 'running' → ⏸ Pause
-      mode = 'paused'  → ▶ Resume
-      mode = 'stopped' → ❌ Delete  (clears everything + localStorage)
-
-    Main Start button:
-      - idle / stopped  → starts fresh
-      - running         → becomes Pause (same as FAB)
-      - paused          → becomes Resume (same as FAB)
+    • Top button: only Start ⇄ Stop
+    • Timer font: extra large
+    • Target duration: popup modal with filter icon button
+    • Start/End timestamps: hidden until Stopped
+    • Version badge: top-right (tap to see target info too)
+    • Light theme-color (no more black bar on mobile)
     ═══════════════════════════════════════════════════════════
   -->
 
@@ -44,15 +39,15 @@
       justify-content: center;
       align-items: flex-start;
       padding: 1.25rem;
-      padding-top: 2rem;
-      padding-bottom: 6rem;
+      padding-top: 2.25rem;
+      padding-bottom: 3rem;
     }
 
     /* ---- single flat card ---- */
     .app-card {
       max-width: 640px;
       width: 100%;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.88);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-radius: 2rem;
@@ -63,24 +58,85 @@
       position: relative;
     }
 
-    /* ---- tiny version badge top-right ---- */
-    .version-badge {
+    /* ---- header row: filter icon (left), version (right) ---- */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      min-height: 36px;
+    }
+
+    /* filter button that opens target popup */
+    .filter-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: white;
+      color: #1e2b3a;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.08);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .filter-btn:hover {
+      background: #eef2f8;
+      transform: translateY(-1px);
+    }
+
+    .filter-btn:active { transform: translateY(1px); }
+
+    .filter-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* small badge on filter when target active */
+    .filter-btn .target-dot {
       position: absolute;
-      top: 0.75rem;
-      right: 1rem;
+      top: -3px;
+      right: -3px;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 30px;
+      background: #166534;
+      color: white;
+      font-size: 0.55rem;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      border: 2px solid white;
+      font-family: 'SF Mono', monospace;
+    }
+
+    .filter-btn.has-target .target-dot { display: inline-flex; }
+
+    .version-badge {
       font-size: 0.6rem;
       font-weight: 700;
       letter-spacing: 0.4px;
       color: #8b9aad;
       font-family: 'SF Mono', monospace;
       user-select: none;
+      cursor: pointer;
     }
 
-    /* ---- install button (top-right, tiny) ---- */
+    /* install button (top bar, hidden by default) */
     .install-btn {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.75rem;
       background: #e6f0fa;
       color: #1e5a7a;
       border: 1px solid #cde0f0;
@@ -94,23 +150,22 @@
       gap: 0.3rem;
       transition: all 0.2s;
       white-space: nowrap;
-      z-index: 10;
+      margin-left: auto;
     }
 
     .install-btn.visible { display: inline-flex; }
     .install-btn:hover { background: #d4e6f7; }
-    .install-btn.visible ~ .version-badge { top: 2.2rem; }
 
-    /* ---- huge time at the very top ---- */
+    /* ---- huge time ---- */
     .main-time {
-      font-size: 4.6rem;
+      font-size: 5.8rem;
       font-weight: 600;
       font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
       color: #0f1a26;
       letter-spacing: 1px;
       line-height: 1;
       text-align: center;
-      padding: 0.4rem 0 1rem;
+      padding: 0.6rem 0 1.4rem;
       word-break: break-word;
       transition: color 0.2s;
     }
@@ -118,14 +173,14 @@
     .main-time.running { color: #166534; }
     .main-time.paused  { color: #b45309; }
 
-    /* ---- main toggle button (Start ⇄ Pause ⇄ Resume) ---- */
+    /* ---- top button: only Start ⇄ Stop ---- */
     .toggle-btn {
       width: 100%;
-      padding: 1.05rem 1.25rem;
+      padding: 1.15rem 1.25rem;
       border: none;
       border-radius: 50px;
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -137,7 +192,7 @@
       transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
       letter-spacing: 0.3px;
       user-select: none;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
 
     .toggle-btn:hover {
@@ -147,22 +202,52 @@
 
     .toggle-btn:active { transform: translateY(1px); }
 
-    .toggle-btn.paused {
-      background: #b45309;
-      box-shadow: 0 14px 30px -12px #b4530999, 0 4px 10px rgba(0, 0, 0, 0.06);
+    .toggle-btn.stopping {
+      background: #dc2626;
+      box-shadow: 0 14px 30px -12px #dc262699, 0 4px 10px rgba(0, 0, 0, 0.06);
+    }
+    .toggle-btn.stopping:hover { background: #b91c1c; }
+
+    .toggle-btn .btn-icon { font-size: 1.3rem; line-height: 1; }
+
+    /* ---- target active status pill ---- */
+    .target-pill {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      background: #e2f3e6;
+      color: #166534;
+      border: 1px solid #b7e0c4;
+      border-radius: 40px;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin: 0 auto 1.25rem;
+      width: fit-content;
     }
 
-    .toggle-btn.paused:hover { background: #92400e; }
+    .target-pill.visible { display: inline-flex; }
 
-    .toggle-btn .btn-icon { font-size: 1.25rem; line-height: 1; }
-
-    /* ---- timestamps row ---- */
+    /* ---- timestamps (hidden until stopped) ---- */
     .timestamp-row {
-      display: flex;
+      display: none;
       justify-content: space-between;
       gap: 0.75rem 1rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.5rem;
       flex-wrap: wrap;
+      padding: 0.9rem 1rem;
+      background: #f8fafd;
+      border-radius: 1.25rem;
+      border: 1px solid #e2eaf3;
+      animation: slideDown 0.3s ease;
+    }
+
+    .timestamp-row.visible { display: flex; }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .timestamp-item {
@@ -188,7 +273,7 @@
 
     .timestamp-value {
       font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 500;
       color: #1a2b3e;
       white-space: nowrap;
@@ -196,58 +281,84 @@
       text-overflow: ellipsis;
     }
 
-    /* ---- divider ---- */
-    .divider {
-      height: 1px;
-      background: #e2eaf3;
-      margin: 0 0 1.25rem;
-      border: none;
+    /* ═══════════════════════════════════════════════════════
+       TARGET POPUP MODAL
+       ═══════════════════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 26, 38, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 1100;
+      animation: fadeIn 0.2s ease;
     }
 
-    /* ---- target section (flat, no nested card) ---- */
-    .section-label {
-      font-size: 0.7rem;
+    .modal-overlay.show { display: flex; }
+    .modal-overlay.center { align-items: center; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-sheet {
+      background: white;
+      border-radius: 2rem;
+      padding: 1.5rem 1.4rem 1.5rem;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 40px 80px -20px rgba(0, 20, 40, 0.45);
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-handle {
+      width: 44px;
+      height: 4px;
+      background: #d9e2ec;
+      border-radius: 30px;
+      margin: 0 auto 1rem;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
       font-weight: 700;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      color: #8b9aad;
-      margin-bottom: 0.5rem;
+      color: #1e2b3a;
+      margin-bottom: 0.25rem;
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 0.5rem;
     }
 
-    .section-label .target-badge {
-      font-size: 0.6rem;
-      font-weight: 700;
-      padding: 0.15rem 0.6rem;
-      border-radius: 30px;
-      background: #dbeafe;
-      color: #1e5a7a;
-      letter-spacing: 0.4px;
-      text-transform: uppercase;
+    .modal-subtitle {
+      font-size: 0.8rem;
+      color: #8b9aad;
+      font-weight: 500;
+      margin-bottom: 1.25rem;
     }
 
-    .section-label .target-badge.active {
-      background: #e2f3e6;
-      color: #166534;
-    }
-
-    /* quick chips row */
+    /* quick chips */
     .quick-durations {
       display: flex;
       flex-wrap: wrap;
       gap: 0.4rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1.1rem;
     }
 
     .quick-chip {
       background: white;
       border: 1px solid #d9e2ec;
       border-radius: 40px;
-      padding: 0.35rem 0.85rem;
-      font-size: 0.75rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: #1e2b3a;
       cursor: pointer;
@@ -269,24 +380,33 @@
       box-shadow: 0 4px 10px -4px #1e2b3a80;
     }
 
-    /* manual entry row */
+    /* manual entry */
+    .manual-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #8b9aad;
+      margin-bottom: 0.4rem;
+    }
+
     .manual-entry {
       display: flex;
       align-items: center;
       gap: 0.4rem;
       flex-wrap: wrap;
+      margin-bottom: 1.25rem;
     }
 
     .manual-entry .field-group {
       display: flex;
       align-items: center;
-      background: white;
+      background: #f8fafd;
       border-radius: 40px;
-      padding: 0.1rem 0.2rem 0.1rem 0.7rem;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+      padding: 0.1rem 0.2rem 0.1rem 0.75rem;
       border: 1px solid #e2e8f0;
       flex: 1 1 0;
-      min-width: 80px;
+      min-width: 75px;
     }
 
     .manual-entry input {
@@ -294,11 +414,11 @@
       min-width: 0;
       border: none;
       background: transparent;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 600;
       color: #1e2b3a;
       font-family: 'SF Mono', monospace;
-      padding: 0.4rem 0;
+      padding: 0.5rem 0;
       outline: none;
       text-align: right;
     }
@@ -313,173 +433,49 @@
       font-size: 0.65rem;
       font-weight: 700;
       color: #8b9aad;
-      padding: 0 0.45rem 0 0.15rem;
+      padding: 0 0.5rem 0 0.2rem;
       text-transform: uppercase;
     }
 
-    .manual-entry .apply-btn {
-      background: #1e2b3a;
-      color: white;
+    /* modal action buttons */
+    .modal-actions {
+      display: flex;
+      gap: 0.55rem;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      padding: 0.9rem 1rem;
       border: none;
-      border-radius: 40px;
-      padding: 0.5rem 1rem;
-      font-size: 0.75rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
       font-weight: 700;
       cursor: pointer;
-      transition: background 0.2s;
-      white-space: nowrap;
-      flex-shrink: 0;
+      transition: all 0.2s;
     }
 
-    .manual-entry .apply-btn:hover { background: #2a3f54; }
-
-    /* target status line */
-    .target-status {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #5f6f84;
-      margin-top: 0.75rem;
-      text-align: center;
+    .modal-clear {
+      background: #eef2f8;
+      color: #1e2b3a;
+      border: 1px solid #d9e2ec;
     }
 
-    /* ═══════════════════════════════════════════════════════
-       FLOATING CONTEXTUAL BUTTON (bottom-right)
-       Shows: Pause / Resume / Delete depending on state
-       ═══════════════════════════════════════════════════════ */
-    .fab {
-      position: fixed;
-      bottom: 1.75rem;
-      right: 1.75rem;
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      border: 1px solid;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 900;
-      color: white;
-    }
+    .modal-clear:hover { background: #e2e8f0; }
 
-    .fab svg {
-      width: 26px;
-      height: 26px;
-      stroke: currentColor;
-      stroke-width: 2.4;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: transform 0.2s;
-    }
-
-    .fab:hover {
-      transform: translateY(-3px) scale(1.05);
-    }
-
-    .fab:active {
-      transform: translateY(0) scale(1);
-    }
-
-    /* --- Pause variant (red-orange, while running) --- */
-    .fab.pause {
-      background: #dc2626;
-      border-color: #b91c1c;
-      box-shadow: 0 12px 26px -8px rgba(220, 38, 38, 0.55),
-                  0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-    .fab.pause:hover {
-      background: #b91c1c;
-      box-shadow: 0 18px 32px -10px rgba(220, 38, 38, 0.65),
-                  0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-    .fab.pause svg { fill: currentColor; stroke: none; }
-
-    /* --- Resume variant (amber, while paused) --- */
-    .fab.resume {
-      background: #b45309;
-      border-color: #92400e;
-      box-shadow: 0 12px 26px -8px rgba(180, 83, 9, 0.55),
-                  0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-    .fab.resume:hover {
-      background: #92400e;
-      box-shadow: 0 18px 32px -10px rgba(180, 83, 9, 0.65),
-                  0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-    .fab.resume svg { fill: currentColor; stroke: none; }
-
-    /* --- Delete variant (soft amber, idle/stopped) --- */
-    .fab.delete {
-      background: white;
-      color: #b45309;
-      border-color: #fed7aa;
-      box-shadow: 0 10px 24px -8px rgba(180, 83, 9, 0.35),
-                  0 4px 10px rgba(0, 0, 0, 0.06);
-    }
-    .fab.delete:hover {
-      background: #fff2e5;
-      box-shadow: 0 16px 32px -10px rgba(180, 83, 9, 0.45),
-                  0 4px 10px rgba(0, 0, 0, 0.06);
-    }
-
-    /* tooltip */
-    .fab .fab-tip {
-      position: absolute;
-      right: 76px;
-      top: 50%;
-      transform: translateY(-50%);
+    .modal-confirm {
       background: #1e2b3a;
       color: white;
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.35rem 0.75rem;
-      border-radius: 30px;
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
+      box-shadow: 0 8px 18px -8px #1e2b3a99;
     }
 
-    .fab:hover .fab-tip { opacity: 1; }
+    .modal-confirm:hover { background: #2a3f54; }
 
-    /* ---- confirm modal ---- */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 26, 38, 0.5);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      z-index: 1100;
-      animation: fadeIn 0.2s ease;
-    }
-
-    .modal-overlay.show { display: flex; }
-
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    .modal {
-      background: white;
-      border-radius: 2rem;
-      padding: 1.75rem 1.5rem 1.5rem;
-      max-width: 360px;
-      width: 100%;
-      box-shadow: 0 40px 80px -20px rgba(0, 20, 40, 0.4);
+    /* delete confirm modal */
+    .modal-center {
       text-align: center;
-      animation: popIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    @keyframes popIn {
-      from { transform: scale(0.92); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    .modal-icon {
+    .modal-center .modal-icon {
       width: 60px;
       height: 60px;
       border-radius: 50%;
@@ -491,7 +487,7 @@
       margin-bottom: 0.9rem;
     }
 
-    .modal-icon svg {
+    .modal-center .modal-icon svg {
       width: 28px;
       height: 28px;
       stroke: currentColor;
@@ -501,51 +497,26 @@
       stroke-linejoin: round;
     }
 
-    .modal h3 {
+    .modal-center h3 {
       font-size: 1.15rem;
       font-weight: 700;
       color: #1e2b3a;
       margin-bottom: 0.35rem;
     }
 
-    .modal p {
+    .modal-center p {
       font-size: 0.85rem;
       color: #5f6f84;
       line-height: 1.5;
       margin-bottom: 1.4rem;
     }
 
-    .modal-actions {
-      display: flex;
-      gap: 0.55rem;
-    }
-
-    .modal-actions button {
-      flex: 1;
-      padding: 0.8rem 1rem;
-      border: none;
-      border-radius: 50px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .modal-cancel {
-      background: #eef2f8;
-      color: #1e2b3a;
-      border: 1px solid #d9e2ec;
-    }
-
-    .modal-cancel:hover { background: #e2e8f0; }
-
-    .modal-confirm {
+    .modal-danger {
       background: #dc2626;
       color: white;
       box-shadow: 0 8px 18px -8px #dc262699;
     }
-
-    .modal-confirm:hover { background: #b91c1c; }
+    .modal-danger:hover { background: #b91c1c; }
 
     /* install toast */
     .install-toast {
@@ -561,7 +532,7 @@
       font-weight: 500;
       box-shadow: 0 20px 40px -10px rgba(0, 20, 40, 0.4);
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 1000;
+      z-index: 1200;
       display: flex;
       align-items: center;
       gap: 0.6rem;
@@ -582,38 +553,49 @@
     }
 
     @media (max-width: 560px) {
-      .main-time { font-size: 3.4rem; padding: 0.3rem 0 0.8rem; }
+      .main-time { font-size: 4.6rem; padding: 0.4rem 0 1rem; }
       .app-card { padding: 1.25rem; border-radius: 1.75rem; }
-      .toggle-btn { padding: 0.95rem 1.1rem; font-size: 1rem; }
-      .manual-entry .field-group { min-width: 70px; }
-      .fab { width: 58px; height: 58px; bottom: 1.25rem; right: 1.25rem; }
-      .fab svg { width: 24px; height: 24px; }
-      .fab .fab-tip { display: none; }
+      .toggle-btn { padding: 1rem 1.1rem; font-size: 1.05rem; }
+      .manual-entry .field-group { min-width: 65px; }
     }
 
     @media (max-width: 380px) {
-      .main-time { font-size: 2.8rem; }
-      .quick-chip { padding: 0.3rem 0.7rem; font-size: 0.7rem; }
-      .manual-entry .apply-btn { padding: 0.45rem 0.8rem; font-size: 0.7rem; }
+      .main-time { font-size: 3.6rem; }
+      .quick-chip { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
     }
   </style>
 </head>
 <body>
   <div class="app-card">
-    <button class="install-btn" id="installBtn" title="Install app">⬇️ Install</button>
-    <div class="version-badge" id="versionBadge">v1.4.0</div>
+    <!-- top bar: filter (left) · install · version (right) -->
+    <div class="top-bar">
+      <button class="filter-btn" id="filterBtn" title="Set target duration">
+        <svg viewBox="0 0 24 24">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        <span class="target-dot" id="targetDot">—</span>
+      </button>
+      <button class="install-btn" id="installBtn" title="Install app">⬇️ Install</button>
+      <span class="version-badge" id="versionBadge">v1.5.0</span>
+    </div>
 
     <!-- HUGE time -->
     <div class="main-time" id="mainDisplay">00:00:00</div>
 
-    <!-- Main toggle: Start / Pause / Resume -->
+    <!-- target pill (shows when target is set) -->
+    <div class="target-pill" id="targetPill">
+      <span>🎯</span>
+      <span id="targetPillText">Target set</span>
+    </div>
+
+    <!-- top button: only Start ⇄ Stop -->
     <button class="toggle-btn" id="toggleBtn">
       <span class="btn-icon" id="toggleIcon">▶</span>
       <span id="toggleLabel">Start</span>
     </button>
 
-    <!-- timestamps -->
-    <div class="timestamp-row">
+    <!-- timestamps (hidden until stopped) -->
+    <div class="timestamp-row" id="timestampRow">
       <div class="timestamp-item">
         <span class="timestamp-label">Start</span>
         <span class="timestamp-value" id="startTimestamp">—</span>
@@ -623,62 +605,53 @@
         <span class="timestamp-value" id="endTimestamp">—</span>
       </div>
     </div>
-
-    <hr class="divider">
-
-    <!-- target -->
-    <div class="section-label">
-      <span>🎯 Target duration</span>
-      <span class="target-badge" id="targetBadge">Manual</span>
-    </div>
-
-    <div class="quick-durations" id="quickChips">
-      <button class="quick-chip" data-sec="600">10m</button>
-      <button class="quick-chip" data-sec="1800">30m</button>
-      <button class="quick-chip" data-sec="5400">90m</button>
-      <button class="quick-chip" data-sec="3600">1h</button>
-      <button class="quick-chip" data-sec="7200">2h</button>
-      <button class="quick-chip" data-sec="9000">2.5h</button>
-      <button class="quick-chip" data-sec="10800">3h</button>
-      <button class="quick-chip" data-sec="21600">6h</button>
-      <button class="quick-chip" data-sec="43200">12h</button>
-    </div>
-
-    <div class="manual-entry" id="manualEntry">
-      <div class="field-group">
-        <input type="number" id="hoursInput" min="0" max="16" value="0" step="1">
-        <span class="unit">h</span>
-      </div>
-      <div class="field-group">
-        <input type="number" id="minutesInput" min="0" max="59" value="0" step="1">
-        <span class="unit">m</span>
-      </div>
-      <div class="field-group">
-        <input type="number" id="secondsInput" min="0" max="59" value="30" step="1">
-        <span class="unit">s</span>
-      </div>
-      <button class="apply-btn" id="applyManual">Set</button>
-    </div>
-
-    <div class="target-status" id="targetStatus">Keep running until stopped</div>
   </div>
 
-  <!-- FLOATING CONTEXTUAL BUTTON -->
-  <button class="fab delete" id="fab" title="Delete">
-    <span class="fab-tip" id="fabTip">Delete</span>
-    <svg id="fabIcon" viewBox="0 0 24 24">
-      <!-- default: trash icon -->
-      <polyline points="3 6 5 6 21 6"></polyline>
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-      <path d="M10 11v6"></path>
-      <path d="M14 11v6"></path>
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-    </svg>
-  </button>
+  <!-- ═══ TARGET POPUP MODAL ═══ -->
+  <div class="modal-overlay" id="targetModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">🎯 Target duration</div>
+      <div class="modal-subtitle">Auto-stop when the timer reaches this length.</div>
 
-  <!-- confirm modal -->
-  <div class="modal-overlay" id="clearModal">
-    <div class="modal">
+      <div class="quick-durations" id="quickChips">
+        <button class="quick-chip" data-sec="600">10 min</button>
+        <button class="quick-chip" data-sec="1800">30 min</button>
+        <button class="quick-chip" data-sec="5400">90 min</button>
+        <button class="quick-chip" data-sec="3600">1 hour</button>
+        <button class="quick-chip" data-sec="7200">2 hour</button>
+        <button class="quick-chip" data-sec="9000">2.5 h</button>
+        <button class="quick-chip" data-sec="10800">3 h</button>
+        <button class="quick-chip" data-sec="21600">6 h</button>
+        <button class="quick-chip" data-sec="43200">12 h</button>
+      </div>
+
+      <div class="manual-label">Or enter manually</div>
+      <div class="manual-entry" id="manualEntry">
+        <div class="field-group">
+          <input type="number" id="hoursInput" min="0" max="16" value="0" step="1">
+          <span class="unit">h</span>
+        </div>
+        <div class="field-group">
+          <input type="number" id="minutesInput" min="0" max="59" value="0" step="1">
+          <span class="unit">m</span>
+        </div>
+        <div class="field-group">
+          <input type="number" id="secondsInput" min="0" max="59" value="0" step="1">
+          <span class="unit">s</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-clear" id="targetClear">Remove target</button>
+        <button class="modal-confirm" id="targetApply">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DELETE CONFIRM MODAL ═══ -->
+  <div class="modal-overlay center" id="deleteModal">
+    <div class="modal-sheet modal-center">
       <div class="modal-icon">
         <svg viewBox="0 0 24 24">
           <polyline points="3 6 5 6 21 6"></polyline>
@@ -689,10 +662,10 @@
         </svg>
       </div>
       <h3>Clear all data?</h3>
-      <p>This will reset the timer, clear timestamps, and remove saved state from this device.</p>
+      <p>This will reset the timer, clear timestamps, remove the target, and wipe saved state from this device.</p>
       <div class="modal-actions">
-        <button class="modal-cancel" id="cancelClear">Cancel</button>
-        <button class="modal-confirm" id="confirmClear">Clear</button>
+        <button class="modal-clear" id="cancelClear">Cancel</button>
+        <button class="modal-danger" id="confirmClear">Clear</button>
       </div>
     </div>
   </div>
@@ -704,7 +677,7 @@
   </div>
 
   <script>
-    const APP_VERSION = '1.4.0';
+    const APP_VERSION = '1.5.0';
     const STORAGE_KEY = 'chronoPro.state';
 
     /* ---------- inline PWA manifest ---------- */
@@ -714,7 +687,7 @@
         description: "Precision timer & stopwatch",
         start_url: ".", scope: ".",
         display: "standalone", orientation: "portrait",
-        background_color: "#f5f7fc", theme_color: "#1e2b3a",
+        background_color: "#f5f7fc", theme_color: "#f5f7fc",
         version: APP_VERSION,
         icons: [
           { src: "logo.png", sizes: "192x192", type: "image/png", purpose: "any" },
@@ -812,10 +785,9 @@
        TIMER
        ═══════════════════════════════════════════════════════════ */
     (function timerApp() {
-      let mode = 'idle';   // 'idle' | 'running' | 'paused' | 'stopped'
+      let mode = 'idle';   // 'idle' | 'running' | 'stopped'
       let startTime = null;
       let endTime = null;
-      let accumulatedMs = 0;
       let elapsedSeconds = 0;
       let timerInterval = null;
       let targetDurationSec = 0;
@@ -823,49 +795,29 @@
       const mainDisplay = document.getElementById('mainDisplay');
       const startTimestampEl = document.getElementById('startTimestamp');
       const endTimestampEl = document.getElementById('endTimestamp');
+      const timestampRow = document.getElementById('timestampRow');
 
       const toggleBtn = document.getElementById('toggleBtn');
       const toggleIcon = document.getElementById('toggleIcon');
       const toggleLabel = document.getElementById('toggleLabel');
 
-      const fab = document.getElementById('fab');
-      const fabIcon = document.getElementById('fabIcon');
-      const fabTip = document.getElementById('fabTip');
+      const filterBtn = document.getElementById('filterBtn');
+      const targetDot = document.getElementById('targetDot');
+      const targetPill = document.getElementById('targetPill');
+      const targetPillText = document.getElementById('targetPillText');
 
-      const clearModal = document.getElementById('clearModal');
+      const targetModal = document.getElementById('targetModal');
+      const targetClearBtn = document.getElementById('targetClear');
+      const targetApplyBtn = document.getElementById('targetApply');
+
+      const deleteModal = document.getElementById('deleteModal');
       const cancelClearBtn = document.getElementById('cancelClear');
       const confirmClearBtn = document.getElementById('confirmClear');
 
       const hoursInput = document.getElementById('hoursInput');
       const minutesInput = document.getElementById('minutesInput');
       const secondsInput = document.getElementById('secondsInput');
-      const applyManualBtn = document.getElementById('applyManual');
-      const targetBadge = document.getElementById('targetBadge');
-      const targetStatus = document.getElementById('targetStatus');
-
       const quickChips = document.querySelectorAll('.quick-chip');
-
-      /* ---------- SVG icons ---------- */
-      const ICON_TRASH = `
-        <polyline points="3 6 5 6 21 6"></polyline>
-        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-        <path d="M10 11v6"></path>
-        <path d="M14 11v6"></path>
-        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-      `;
-      const ICON_PAUSE = `
-        <rect x="7" y="5" width="3.5" height="14" rx="1"></rect>
-        <rect x="13.5" y="5" width="3.5" height="14" rx="1"></rect>
-      `;
-      const ICON_PLAY = `
-        <polygon points="7 4 20 12 7 20 7 4"></polygon>
-      `;
-
-      function setFabIcon(kind) {
-        fabIcon.innerHTML = kind === 'pause' ? ICON_PAUSE
-                          : kind === 'resume' ? ICON_PLAY
-                          : ICON_TRASH;
-      }
 
       /* ---------- storage ---------- */
       function saveState() {
@@ -874,7 +826,6 @@
             mode,
             startTime: startTime ? startTime.getTime() : null,
             endTime: endTime ? endTime.getTime() : null,
-            accumulatedMs,
             elapsedSeconds,
             targetDurationSec,
             version: APP_VERSION
@@ -891,17 +842,17 @@
 
           if (s.startTime) startTime = new Date(s.startTime);
           if (s.endTime) endTime = new Date(s.endTime);
-          accumulatedMs = s.accumulatedMs || 0;
           elapsedSeconds = s.elapsedSeconds || 0;
           targetDurationSec = s.targetDurationSec || 0;
 
           if (s.mode === 'running' && s.startTime) {
             mode = 'running';
-            const runningMs = Date.now() - s.startTime.getTime();
-            elapsedSeconds = Math.floor((accumulatedMs + runningMs) / 1000);
-          } else if (s.mode === 'paused') { mode = 'paused'; }
-          else if (s.mode === 'stopped') { mode = 'stopped'; }
-          else { mode = 'idle'; }
+            elapsedSeconds = Math.floor((Date.now() - s.startTime.getTime()) / 1000);
+          } else if (s.mode === 'stopped') {
+            mode = 'stopped';
+          } else {
+            mode = 'idle';
+          }
           return true;
         } catch (e) { return false; }
       }
@@ -935,73 +886,153 @@
         return `${h}:${m}:${s}`;
       }
 
+      function targetPillLabel(sec) {
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        const parts = [];
+        if (h > 0) parts.push(`${h}h`);
+        if (m > 0) parts.push(`${m}m`);
+        if (s > 0) parts.push(`${s}s`);
+        return parts.join(' ') || '0s';
+      }
+
+      /* ---------- UI updaters ---------- */
       function updateMainDisplay() {
         mainDisplay.textContent = secondsToHMS(elapsedSeconds);
         mainDisplay.classList.toggle('running', mode === 'running');
-        mainDisplay.classList.toggle('paused', mode === 'paused');
+        mainDisplay.classList.toggle('paused', mode === 'stopped' && elapsedSeconds > 0);
+      }
+
+      function updateToggleUI() {
+        if (mode === 'running') {
+          toggleBtn.classList.add('stopping');
+          toggleIcon.textContent = '⏹';
+          toggleLabel.textContent = 'Stop';
+        } else {
+          toggleBtn.classList.remove('stopping');
+          toggleIcon.textContent = '▶';
+          toggleLabel.textContent = 'Start';
+        }
       }
 
       function updateTargetUI() {
+        // filter badge
         if (targetDurationSec > 0) {
-          targetBadge.textContent = 'Active';
-          targetBadge.classList.add('active');
-          const h = Math.floor(targetDurationSec / 3600);
-          const m = Math.floor((targetDurationSec % 3600) / 60);
-          const s = targetDurationSec % 60;
-          const parts = [];
-          if (h > 0) parts.push(`${h}h`);
-          if (m > 0) parts.push(`${m}m`);
-          if (s > 0) parts.push(`${s}s`);
-          targetStatus.textContent = `Auto-stop after ${parts.join(' ')}`;
+          filterBtn.classList.add('has-target');
+          targetDot.textContent = targetPillLabel(targetDurationSec).replace(/\s+/g, '');
+          targetPill.classList.add('visible');
+          targetPillText.textContent = `Auto-stop after ${targetPillLabel(targetDurationSec)}`;
         } else {
-          targetBadge.textContent = 'Manual';
-          targetBadge.classList.remove('active');
-          targetStatus.textContent = 'Keep running until stopped';
+          filterBtn.classList.remove('has-target');
+          targetPill.classList.remove('visible');
         }
+        // reflect in manual inputs
+        const h = Math.floor(targetDurationSec / 3600);
+        const m = Math.floor((targetDurationSec % 3600) / 60);
+        const s = targetDurationSec % 60;
+        hoursInput.value = h;
+        minutesInput.value = m;
+        secondsInput.value = s;
+        // chip highlight
+        quickChips.forEach(chip => {
+          chip.classList.toggle('active', parseInt(chip.dataset.sec, 10) === targetDurationSec && targetDurationSec > 0);
+        });
       }
 
-      /* ---------- the key UI updater ---------- */
-      function updateUI() {
-        // Main toggle button label
-        if (mode === 'idle' || mode === 'stopped') {
-          toggleBtn.classList.remove('paused');
-          toggleIcon.textContent = '▶';
-          toggleLabel.textContent = 'Start';
-        } else if (mode === 'running') {
-          toggleBtn.classList.remove('paused');
-          toggleIcon.textContent = '⏸';
-          toggleLabel.textContent = 'Pause';
-        } else if (mode === 'paused') {
-          toggleBtn.classList.add('paused');
-          toggleIcon.textContent = '▶';
-          toggleLabel.textContent = 'Resume';
-        }
-
-        // FAB changes with mode
-        fab.classList.remove('pause', 'resume', 'delete');
-        if (mode === 'running') {
-          fab.classList.add('pause');
-          fabTip.textContent = 'Pause';
-          setFabIcon('pause');
-        } else if (mode === 'paused') {
-          fab.classList.add('resume');
-          fabTip.textContent = 'Resume';
-          setFabIcon('resume');
+      function updateTimestampUI() {
+        if (mode === 'stopped' && endTime) {
+          timestampRow.classList.add('visible');
+          startTimestampEl.textContent = startTime ? formatTimestamp(startTime) : '—';
+          endTimestampEl.textContent = formatTimestamp(endTime);
         } else {
-          // idle or stopped → delete
-          fab.classList.add('delete');
-          fabTip.textContent = 'Delete';
-          setFabIcon('delete');
+          timestampRow.classList.remove('visible');
         }
       }
 
-      /* ---------- target helpers ---------- */
-      function getManualTargetSeconds() {
-        const h = parseInt(hoursInput.value, 10) || 0;
-        const m = parseInt(minutesInput.value, 10) || 0;
-        const s = parseInt(secondsInput.value, 10) || 0;
-        return h * 3600 + m * 60 + s;
+      /* ---------- core actions ---------- */
+      function startTimer() {
+        if (mode === 'running') return;
+        startTime = new Date();
+        endTime = null;
+        elapsedSeconds = 0;
+        mode = 'running';
+
+        updateMainDisplay();
+        updateToggleUI();
+        updateTimestampUI();
+        saveState();
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(tick, 200);
       }
+
+      function stopTimer() {
+        if (mode !== 'running') return;
+        const now = new Date();
+        elapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        endTime = now;
+        mode = 'stopped';
+
+        clearInterval(timerInterval);
+        timerInterval = null;
+
+        updateMainDisplay();
+        updateToggleUI();
+        updateTimestampUI();
+        saveState();
+      }
+
+      function tick() {
+        if (mode !== 'running' || !startTime) return;
+        elapsedSeconds = Math.floor((Date.now() - startTime.getTime()) / 1000);
+        updateMainDisplay();
+
+        if (targetDurationSec > 0 && elapsedSeconds >= targetDurationSec) {
+          elapsedSeconds = targetDurationSec;
+          updateMainDisplay();
+          stopTimer();
+          // override elapsed to target exactly
+          elapsedSeconds = targetDurationSec;
+          updateMainDisplay();
+        }
+      }
+
+      /* ---------- main toggle (Start ⇄ Stop only) ---------- */
+      toggleBtn.addEventListener('click', () => {
+        if (mode === 'running') stopTimer();
+        else startTimer();
+      });
+
+      /* ---------- target modal ---------- */
+      function openTargetModal() {
+        targetModal.classList.add('show');
+      }
+      function closeTargetModal() {
+        targetModal.classList.remove('show');
+      }
+
+      filterBtn.addEventListener('click', openTargetModal);
+      targetModal.addEventListener('click', (e) => {
+        if (e.target === targetModal) closeTargetModal();
+      });
+
+      quickChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          const sec = parseInt(chip.dataset.sec, 10);
+          if (chip.classList.contains('active')) {
+            chip.classList.remove('active');
+            targetDurationSec = 0;
+          } else {
+            quickChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            targetDurationSec = sec;
+            hoursInput.value = Math.floor(sec / 3600);
+            minutesInput.value = Math.floor((sec % 3600) / 60);
+            secondsInput.value = sec % 60;
+          }
+        });
+      });
 
       function enforceManualLimits() {
         let h = parseInt(hoursInput.value, 10) || 0;
@@ -1015,165 +1046,77 @@
         secondsInput.value = s;
       }
 
-      function setTargetFromManual() {
+      [hoursInput, minutesInput, secondsInput].forEach(input => {
+        input.addEventListener('change', enforceManualLimits);
+        input.addEventListener('blur', enforceManualLimits);
+      });
+
+      targetApplyBtn.addEventListener('click', () => {
         enforceManualLimits();
-        const total = getManualTargetSeconds();
-        targetDurationSec = total > 0 ? total : 0;
-        quickChips.forEach(c => c.classList.remove('active'));
+        const h = parseInt(hoursInput.value, 10) || 0;
+        const m = parseInt(minutesInput.value, 10) || 0;
+        const s = parseInt(secondsInput.value, 10) || 0;
+        targetDurationSec = h * 3600 + m * 60 + s;
+        if (targetDurationSec > 16 * 3600) targetDurationSec = 16 * 3600;
         updateTargetUI();
         saveState();
-      }
+        closeTargetModal();
+      });
 
-      function setTargetFromChip(sec, chip) {
-        if (chip.classList.contains('active')) {
-          chip.classList.remove('active');
-          targetDurationSec = 0;
-        } else {
-          quickChips.forEach(c => c.classList.remove('active'));
-          chip.classList.add('active');
-          targetDurationSec = sec;
-          hoursInput.value = Math.floor(sec / 3600);
-          minutesInput.value = Math.floor((sec % 3600) / 60);
-          secondsInput.value = sec % 60;
-        }
+      targetClearBtn.addEventListener('click', () => {
+        targetDurationSec = 0;
+        hoursInput.value = 0;
+        minutesInput.value = 0;
+        secondsInput.value = 0;
         updateTargetUI();
         saveState();
-      }
-
-      /* ---------- core actions ---------- */
-      function startFresh() {
-        clearInterval(timerInterval);
-        accumulatedMs = 0;
-        elapsedSeconds = 0;
-        startTime = new Date();
-        endTime = null;
-        mode = 'running';
-
-        startTimestampEl.textContent = formatTimestamp(startTime);
-        endTimestampEl.textContent = '—';
-        updateMainDisplay();
-        updateUI();
-        saveState();
-        tick();
-        timerInterval = setInterval(tick, 200);
-      }
-
-      function pauseTimer() {
-        if (mode !== 'running') return;
-        accumulatedMs += Date.now() - startTime.getTime();
-        elapsedSeconds = Math.floor(accumulatedMs / 1000);
-        clearInterval(timerInterval);
-        timerInterval = null;
-        mode = 'paused';
-        startTime = null;
-        updateMainDisplay();
-        updateUI();
-        saveState();
-      }
-
-      function resumeTimer() {
-        if (mode !== 'paused') return;
-        startTime = new Date();
-        mode = 'running';
-        updateUI();
-        saveState();
-        tick();
-        timerInterval = setInterval(tick, 200);
-      }
-
-      function stopTimer() {
-        if (mode === 'running') {
-          accumulatedMs += Date.now() - startTime.getTime();
-          elapsedSeconds = Math.floor(accumulatedMs / 1000);
-        } else if (mode !== 'paused') {
-          return;
-        }
-        clearInterval(timerInterval);
-        timerInterval = null;
-        endTime = new Date();
-        endTimestampEl.textContent = formatTimestamp(endTime);
-        mode = 'stopped';
-        startTime = null;
-        updateMainDisplay();
-        updateUI();
-        saveState();
-      }
-
-      function tick() {
-        if (mode !== 'running' || !startTime) return;
-        const runningMs = Date.now() - startTime.getTime();
-        elapsedSeconds = Math.floor((accumulatedMs + runningMs) / 1000);
-        updateMainDisplay();
-
-        if (targetDurationSec > 0 && elapsedSeconds >= targetDurationSec) {
-          elapsedSeconds = targetDurationSec;
-          updateMainDisplay();
-          clearInterval(timerInterval);
-          timerInterval = null;
-          endTime = new Date();
-          endTimestampEl.textContent = formatTimestamp(endTime);
-          mode = 'stopped';
-          startTime = null;
-          updateUI();
-          saveState();
-        }
-      }
-
-      /* ---------- main toggle ---------- */
-      toggleBtn.addEventListener('click', () => {
-        if (mode === 'idle' || mode === 'stopped') startFresh();
-        else if (mode === 'running') pauseTimer();
-        else if (mode === 'paused') resumeTimer();
+        closeTargetModal();
       });
 
-      /* ---------- FAB (contextual) ---------- */
-      fab.addEventListener('click', () => {
-        if (mode === 'running') {
-          pauseTimer();
-        } else if (mode === 'paused') {
-          resumeTimer();
-        } else {
-          // idle or stopped → delete prompt
-          clearModal.classList.add('show');
-        }
+      /* ---------- delete modal ---------- */
+      // Trigger: long-press the version badge OR tap Stop when already stopped
+      const versionBadge = document.getElementById('versionBadge');
+
+      versionBadge.addEventListener('click', () => {
+        // short tap: nothing special
+      });
+      versionBadge.addEventListener('dblclick', () => {
+        // double-click opens delete prompt
+        deleteModal.classList.add('show');
       });
 
-      /* Long-press on FAB while running/paused = Stop (for those who want it) */
-      let longPressTimer = null;
-      let longPressFired = false;
-
-      function startLongPress() {
-        longPressFired = false;
-        if (mode !== 'running' && mode !== 'paused') return;
-        longPressTimer = setTimeout(() => {
-          longPressFired = true;
-          stopTimer();
+      // Long-press the version badge → delete prompt
+      let vpTimer = null;
+      versionBadge.addEventListener('pointerdown', () => {
+        vpTimer = setTimeout(() => {
+          deleteModal.classList.add('show');
         }, 650);
-      }
-      function cancelLongPress() {
-        clearTimeout(longPressTimer);
-      }
+      });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
+        versionBadge.addEventListener(evt, () => clearTimeout(vpTimer));
+      });
 
-      fab.addEventListener('pointerdown', startLongPress);
-      fab.addEventListener('pointerup', cancelLongPress);
-      fab.addEventListener('pointerleave', cancelLongPress);
-      fab.addEventListener('pointercancel', cancelLongPress);
-      // Prevent the click from firing after a long-press stop
-      fab.addEventListener('click', (e) => {
-        if (longPressFired) {
-          e.stopImmediatePropagation();
-          longPressFired = false;
+      // Also: tapping Stop when already stopped opens delete
+      // We detect a "second tap while stopped" via toggle button
+      let lastStoppedAt = 0;
+      const originalToggleHandler = toggleBtn.onclick;
+      toggleBtn.addEventListener('click', () => {
+        if (mode === 'stopped' && Date.now() - lastStoppedAt < 3000) {
+          deleteModal.classList.add('show');
         }
-      }, true);
+        lastStoppedAt = mode === 'stopped' ? Date.now() : 0;
+      });
 
-      /* ---------- clear modal ---------- */
-      function closeModal() { clearModal.classList.remove('show'); }
-      cancelClearBtn.addEventListener('click', closeModal);
-      clearModal.addEventListener('click', (e) => {
-        if (e.target === clearModal) closeModal();
+      function closeDeleteModal() { deleteModal.classList.remove('show'); }
+      cancelClearBtn.addEventListener('click', closeDeleteModal);
+      deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) closeDeleteModal();
       });
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && clearModal.classList.contains('show')) closeModal();
+        if (e.key === 'Escape') {
+          if (deleteModal.classList.contains('show')) closeDeleteModal();
+          if (targetModal.classList.contains('show')) closeTargetModal();
+        }
       });
 
       confirmClearBtn.addEventListener('click', () => {
@@ -1182,7 +1125,6 @@
         mode = 'idle';
         startTime = null;
         endTime = null;
-        accumulatedMs = 0;
         elapsedSeconds = 0;
         targetDurationSec = 0;
 
@@ -1190,41 +1132,20 @@
 
         mainDisplay.textContent = '00:00:00';
         mainDisplay.classList.remove('running', 'paused');
-        startTimestampEl.textContent = '—';
-        endTimestampEl.textContent = '—';
-
-        quickChips.forEach(c => c.classList.remove('active'));
         hoursInput.value = 0;
         minutesInput.value = 0;
-        secondsInput.value = 30;
-        enforceManualLimits();
+        secondsInput.value = 0;
 
         updateTargetUI();
-        updateUI();
-        closeModal();
-      });
-
-      /* ---------- target inputs ---------- */
-      applyManualBtn.addEventListener('click', setTargetFromManual);
-      quickChips.forEach(chip => {
-        chip.addEventListener('click', () => {
-          setTargetFromChip(parseInt(chip.dataset.sec, 10), chip);
-        });
-      });
-
-      [hoursInput, minutesInput, secondsInput].forEach(input => {
-        input.addEventListener('change', enforceManualLimits);
-        input.addEventListener('blur', enforceManualLimits);
-        input.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') { e.preventDefault(); setTargetFromManual(); }
-        });
+        updateToggleUI();
+        updateTimestampUI();
+        closeDeleteModal();
       });
 
       /* ---------- visibility ---------- */
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && mode === 'running' && startTime) {
-          const runningMs = Date.now() - startTime.getTime();
-          elapsedSeconds = Math.floor((accumulatedMs + runningMs) / 1000);
+          elapsedSeconds = Math.floor((Date.now() - startTime.getTime()) / 1000);
           updateMainDisplay();
         }
       });
@@ -1235,33 +1156,20 @@
       function init() {
         const loaded = loadState();
         if (loaded) {
-          startTimestampEl.textContent = startTime ? formatTimestamp(startTime) : '—';
-          endTimestampEl.textContent = endTime ? formatTimestamp(endTime) : '—';
-
-          const h = Math.floor(targetDurationSec / 3600);
-          const m = Math.floor((targetDurationSec % 3600) / 60);
-          const s = targetDurationSec % 60;
-          hoursInput.value = h;
-          minutesInput.value = m;
-          secondsInput.value = s;
-          enforceManualLimits();
-
-          if (targetDurationSec > 0) {
-            quickChips.forEach(chip => {
-              if (parseInt(chip.dataset.sec, 10) === targetDurationSec) chip.classList.add('active');
-            });
-          }
-
-          updateMainDisplay();
-          updateTargetUI();
-          updateUI();
-
           if (mode === 'running' && startTime) {
             timerInterval = setInterval(tick, 200);
           }
-        } else {
           updateTargetUI();
-          updateUI();
+          updateMainDisplay();
+          updateToggleUI();
+          updateTimestampUI();
+        } else {
+          hoursInput.value = 0;
+          minutesInput.value = 0;
+          secondsInput.value = 0;
+          updateTargetUI();
+          updateToggleUI();
+          updateTimestampUI();
         }
       }
 
