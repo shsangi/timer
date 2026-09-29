@@ -3,7 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1e2b3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Chrono Pro">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Chrono · Pro Timer & Stopwatch</title>
+
+  <!--
+    ═══════════════════════════════════════════════════════════
+    INSTALLABLE PWA — ALL-IN-ONE FILE
+    ═══════════════════════════════════════════════════════════
+    This single file contains:
+      • Timer/stopwatch with start & end timestamps
+      • Target duration (quick chips + manual entry)
+      • Inline PWA manifest (via Blob)
+      • Inline Service Worker (via Blob)
+      • Install button (appears when installable)
+
+    To install:
+      1. Save this file as index.html
+      2. Put your logo.png next to it (optional)
+      3. Serve over HTTPS or localhost (not file://)
+         e.g.  python -m http.server 8000
+      4. Open in Chrome/Edge → click "Install App" button
+         or use browser menu → "Install app"
+    ═══════════════════════════════════════════════════════════
+  -->
+
   <style>
     * {
       margin: 0;
@@ -34,26 +61,88 @@
       border: 1px solid rgba(255, 255, 255, 0.6);
     }
 
-    h1 {
-      font-size: 1.8rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-      color: #1e2b3a;
+    /* ---- header with logo ---- */
+    .app-header {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.9rem;
       margin-bottom: 1.5rem;
       padding-left: 0.25rem;
     }
 
-    h1 span {
+    .app-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      object-fit: cover;
+      box-shadow: 0 8px 16px -6px rgba(30, 43, 58, 0.3),
+                  0 2px 6px rgba(0, 0, 0, 0.06);
+      border: 2px solid white;
+      background: #1e2b3a;
+      flex-shrink: 0;
+    }
+
+    .app-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      flex: 1;
+    }
+
+    .app-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #1e2b3a;
+      line-height: 1.1;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .app-title span {
       background: #1e2b3a;
       color: white;
-      font-size: 0.9rem;
-      font-weight: 500;
-      padding: 0.2rem 0.8rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.7rem;
       border-radius: 30px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .app-subtitle {
+      font-size: 0.75rem;
+      color: #6b7b8f;
+      font-weight: 500;
       letter-spacing: 0.3px;
+    }
+
+    /* install button in header */
+    .install-btn {
+      background: #e6f0fa;
+      color: #1e5a7a;
+      border: 1px solid #cde0f0;
+      border-radius: 40px;
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .install-btn:hover {
+      background: #d4e6f7;
+      transform: translateY(-1px);
+    }
+
+    .install-btn.visible {
+      display: inline-flex;
     }
 
     /* ---- display panel ---- */
@@ -129,7 +218,7 @@
       margin: 0 auto 0.2rem;
     }
 
-    /* ---- NEW target section ---- */
+    /* ---- target section ---- */
     .target-section {
       background: #f8fafd;
       border-radius: 1.8rem;
@@ -423,26 +512,77 @@
       letter-spacing: 0.2px;
     }
 
+    /* install toast */
+    .install-toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(200%);
+      background: #1e2b3a;
+      color: white;
+      padding: 0.9rem 1.5rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 20px 40px -10px rgba(0, 20, 40, 0.4);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      max-width: 90vw;
+    }
+
+    .install-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .install-toast button {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: white;
+      padding: 0.35rem 0.9rem;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
     @media (max-width: 600px) {
       .app-card { padding: 1.25rem; border-radius: 2rem; }
       .main-time { font-size: 2.6rem; }
       .timestamp-value { font-size: 0.8rem; padding: 0.2rem 0.7rem; }
       .target-section { padding: 1rem; }
       .manual-entry .field-group input { width: 45px; }
+      .app-logo { width: 44px; height: 44px; border-radius: 14px; }
+      .app-title { font-size: 1.35rem; }
+      .install-btn { font-size: 0.7rem; padding: 0.4rem 0.7rem; }
     }
 
     @media (max-width: 420px) {
       .main-time { font-size: 2.2rem; }
       .btn { padding: 0.8rem 0.8rem; font-size: 0.9rem; }
       .quick-chip { padding: 0.35rem 0.8rem; font-size: 0.75rem; }
+      .app-title span { font-size: 0.65rem; padding: 0.1rem 0.5rem; }
+      .install-btn span.text { display: none; }
     }
   </style>
 </head>
 <body>
   <div class="app-card">
-    <h1>⏱️ chrono <span>PRO</span></h1>
+    <div class="app-header">
+      <img src="logo.png" alt="Chrono Logo" class="app-logo" id="appLogo">
+      <div class="app-title-group">
+        <div class="app-title">
+          Chrono <span>PRO</span>
+        </div>
+        <div class="app-subtitle">Precision Timer & Stopwatch</div>
+      </div>
+      <button class="install-btn" id="installBtnHeader" title="Install app">
+        ⬇️ <span class="text">Install</span>
+      </button>
+    </div>
 
-    <!-- display panel -->
     <div class="display-panel">
       <div class="timestamp-row">
         <div class="timestamp-item">
@@ -461,7 +601,6 @@
       <div id="statusIndicator" class="status-badge">⏸️ IDLE</div>
     </div>
 
-    <!-- NEW target section -->
     <div class="target-section">
       <div class="target-header">
         <div class="target-label">
@@ -474,7 +613,6 @@
         </div>
       </div>
 
-      <!-- Quick duration chips (always visible, but only used in quick mode) -->
       <div class="quick-durations" id="quickChips">
         <button class="quick-chip" data-sec="600">10 min</button>
         <button class="quick-chip" data-sec="1800">30 min</button>
@@ -487,7 +625,6 @@
         <button class="quick-chip" data-sec="43200">12 h</button>
       </div>
 
-      <!-- Manual entry (visible only in manual mode) -->
       <div class="manual-entry" id="manualEntry">
         <div class="field-group">
           <input type="number" id="hoursInput" min="0" max="16" value="0" step="1">
@@ -504,14 +641,12 @@
         <button class="apply-btn" id="applyManual">Apply</button>
       </div>
 
-      <!-- Current target display -->
       <div class="target-display" id="targetDisplay">
         <span>⏱️</span>
         <span id="targetText">Keep running until stopped</span>
       </div>
     </div>
 
-    <!-- control buttons -->
     <div class="button-grid">
       <button class="btn primary" id="startBtn">▶ Start</button>
       <button class="btn warning" id="stopBtn" disabled>⏹ Stop</button>
@@ -523,20 +658,194 @@
     </div>
   </div>
 
+  <!-- install toast -->
+  <div class="install-toast" id="installToast">
+    <span>📲 Install Chrono Pro for offline use</span>
+    <button id="installToastBtn">Install</button>
+  </div>
+
   <script>
-    (function() {
-      // ---- state ----
+    /* ═══════════════════════════════════════════════════════════
+       PART 1: INLINE PWA MANIFEST (generated as Blob)
+       ═══════════════════════════════════════════════════════════ */
+    (function injectManifest() {
+      // Auto-detect logo — try logo.png, fall back to inline SVG data URI
+      const logoSrc = 'logo.png';
+
+      const manifest = {
+        name: "Chrono Pro Timer",
+        short_name: "Chrono",
+        description: "Professional timer & stopwatch with start/end timestamps",
+        start_url: ".",
+        scope: ".",
+        display: "standalone",
+        orientation: "portrait",
+        background_color: "#f5f7fc",
+        theme_color: "#1e2b3a",
+        icons: [
+          {
+            src: logoSrc,
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any"
+          },
+          {
+            src: logoSrc,
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any"
+          },
+          {
+            src: logoSrc,
+            sizes: "any",
+            type: "image/png",
+            purpose: "maskable"
+          }
+        ]
+      };
+
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = url;
+      document.head.appendChild(link);
+    })();
+
+    /* ═══════════════════════════════════════════════════════════
+       PART 2: INLINE SERVICE WORKER (generated as Blob)
+       Enables offline use + install prompt
+       ═══════════════════════════════════════════════════════════ */
+    (function registerServiceWorker() {
+      if (!('serviceWorker' in navigator)) {
+        console.log('[PWA] Service Worker not supported');
+        return;
+      }
+
+      const swCode = `
+        const CACHE = 'chrono-pro-v1';
+        const ASSETS = ['./'];
+
+        self.addEventListener('install', (event) => {
+          event.waitUntil(
+            caches.open(CACHE).then((cache) => {
+              return cache.addAll(ASSETS).catch(() => {});
+            })
+          );
+          self.skipWaiting();
+        });
+
+        self.addEventListener('activate', (event) => {
+          event.waitUntil(self.clients.claim());
+        });
+
+        self.addEventListener('fetch', (event) => {
+          if (event.request.method !== 'GET') return;
+          event.respondWith(
+            caches.match(event.request).then((cached) => {
+              const network = fetch(event.request).then((response) => {
+                if (response && response.status === 200 && response.type === 'basic') {
+                  const clone = response.clone();
+                  caches.open(CACHE).then((cache) => cache.put(event.request, clone));
+                }
+                return response;
+              }).catch(() => cached);
+              return cached || network;
+            })
+          );
+        });
+      `;
+
+      const blob = new Blob([swCode], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+
+      navigator.serviceWorker.register(swUrl, { scope: './' })
+        .then((reg) => console.log('[PWA] Service Worker registered:', reg.scope))
+        .catch((err) => console.warn('[PWA] SW registration failed:', err));
+    })();
+
+    /* ═══════════════════════════════════════════════════════════
+       PART 3: INSTALL PROMPT HANDLING
+       ═══════════════════════════════════════════════════════════ */
+    (function installPrompt() {
+      let deferredPrompt = null;
+      const installBtnHeader = document.getElementById('installBtnHeader');
+      const installToast = document.getElementById('installToast');
+      const installToastBtn = document.getElementById('installToastBtn');
+
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                          window.navigator.standalone === true;
+
+      if (isStandalone) {
+        console.log('[PWA] Already installed — running standalone');
+        return;
+      }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtnHeader.classList.add('visible');
+
+        // Show toast after 3s if user hasn't installed
+        setTimeout(() => {
+          if (deferredPrompt && !isStandalone) {
+            installToast.classList.add('show');
+          }
+        }, 3000);
+      });
+
+      const triggerInstall = async () => {
+        if (!deferredPrompt) {
+          // Fallback: give browser-specific instructions
+          const ua = navigator.userAgent;
+          let msg = 'To install: open browser menu (⋮ or Share) and choose "Install app" or "Add to Home Screen".';
+          if (/iPhone|iPad|iPod/i.test(ua)) {
+            msg = 'To install: tap the Share button in Safari, then "Add to Home Screen".';
+          } else if (/Android/i.test(ua)) {
+            msg = 'To install: tap the browser menu (⋮), then "Install app" or "Add to Home screen".';
+          }
+          alert(msg);
+          return;
+        }
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('[PWA] Install choice:', outcome);
+        deferredPrompt = null;
+        installBtnHeader.classList.remove('visible');
+        installToast.classList.remove('show');
+      };
+
+      installBtnHeader.addEventListener('click', triggerInstall);
+      installToastBtn.addEventListener('click', triggerInstall);
+
+      window.addEventListener('appinstalled', () => {
+        console.log('[PWA] App installed');
+        installBtnHeader.classList.remove('visible');
+        installToast.classList.remove('show');
+        deferredPrompt = null;
+      });
+
+      // Hide toast if user dismisses by tapping elsewhere (optional)
+      installToast.addEventListener('click', (e) => {
+        if (e.target === installToast) {
+          installToast.classList.remove('show');
+        }
+      });
+    })();
+
+    /* ═══════════════════════════════════════════════════════════
+       PART 4: TIMER / STOPWATCH LOGIC
+       ═══════════════════════════════════════════════════════════ */
+    (function timerApp() {
       let startTime = null;
       let endTime = null;
       let timerInterval = null;
       let isRunning = false;
       let elapsedSeconds = 0;
 
-      // Target mode: 'manual' | 'quick' | 'none'
-      let targetMode = 'none';           // default: none (keep running until stopped)
-      let targetDurationSec = 0;         // 0 means no target
+      let targetMode = 'none';
+      let targetDurationSec = 0;
 
-      // DOM elements
       const startTimestampEl = document.getElementById('startTimestamp');
       const endTimestampEl = document.getElementById('endTimestamp');
       const mainDisplay = document.getElementById('mainDisplay');
@@ -560,7 +869,6 @@
       const manualEntryDiv = document.getElementById('manualEntry');
       const quickChips = document.querySelectorAll('.quick-chip');
 
-      // ---- helpers ----
       function formatTimestamp(date) {
         if (!date) return '—';
         const y = date.getFullYear();
@@ -590,7 +898,6 @@
         subDisplay.textContent = `${h} hours · ${m} minutes · ${s} seconds`;
       }
 
-      // Update target display text
       function updateTargetDisplay() {
         if (targetMode === 'none' || targetDurationSec <= 0) {
           targetText.textContent = 'Keep running until stopped';
@@ -599,8 +906,7 @@
           targetModeBadge.style.color = '#1e5a7a';
         } else {
           const { h, m, s } = secondsToHMS(targetDurationSec);
-          // Build a friendly string
-          let parts = [];
+          const parts = [];
           if (parseInt(h) > 0) parts.push(`${parseInt(h)}h`);
           if (parseInt(m) > 0) parts.push(`${parseInt(m)}m`);
           if (parseInt(s) > 0) parts.push(`${parseInt(s)}s`);
@@ -612,7 +918,6 @@
         }
       }
 
-      // Get target seconds from manual inputs
       function getManualTargetSeconds() {
         const h = parseInt(hoursInput.value, 10) || 0;
         const m = parseInt(minutesInput.value, 10) || 0;
@@ -620,29 +925,24 @@
         return (h * 3600) + (m * 60) + s;
       }
 
-      // Enforce duration limits for manual inputs (0-16h, 0-59m, 0-59s, min 0 allowed)
       function enforceManualLimits() {
         let h = parseInt(hoursInput.value, 10) || 0;
         let m = parseInt(minutesInput.value, 10) || 0;
         let s = parseInt(secondsInput.value, 10) || 0;
-
         h = Math.min(16, Math.max(0, h));
         m = Math.min(59, Math.max(0, m));
         s = Math.min(59, Math.max(0, s));
-
         hoursInput.value = h;
         minutesInput.value = m;
         secondsInput.value = s;
       }
 
-      // Apply manual target
       function applyManualTarget() {
         enforceManualLimits();
         const totalSec = getManualTargetSeconds();
         if (totalSec > 0) {
           targetMode = 'manual';
           targetDurationSec = totalSec;
-          // Deactivate quick chips
           quickChips.forEach(chip => chip.classList.remove('active'));
         } else {
           targetMode = 'none';
@@ -652,20 +952,16 @@
         updateModeUI();
       }
 
-      // Apply quick target from chip
       function applyQuickTarget(seconds, chipElement) {
-        // Toggle: if same chip is active, deactivate (set to none)
         if (chipElement.classList.contains('active')) {
           chipElement.classList.remove('active');
           targetMode = 'none';
           targetDurationSec = 0;
         } else {
-          // Remove active from all chips
           quickChips.forEach(c => c.classList.remove('active'));
           chipElement.classList.add('active');
           targetMode = 'quick';
           targetDurationSec = seconds;
-          // Also update manual fields to reflect this for consistency
           const h = Math.floor(seconds / 3600);
           const m = Math.floor((seconds % 3600) / 60);
           const s = seconds % 60;
@@ -677,7 +973,6 @@
         updateModeUI();
       }
 
-      // Update UI based on mode (manual vs quick)
       function updateModeUI() {
         if (targetMode === 'quick') {
           modeQuickBtn.classList.add('active');
@@ -685,13 +980,11 @@
           manualEntryDiv.style.display = 'none';
           quickChipsContainer.style.display = 'flex';
         } else {
-          // manual or none
           modeManualBtn.classList.add('active');
           modeQuickBtn.classList.remove('active');
           manualEntryDiv.style.display = 'flex';
-          quickChipsContainer.style.display = 'flex'; // still show for reference
+          quickChipsContainer.style.display = 'flex';
         }
-        // Update badge
         if (targetMode === 'none') {
           targetModeBadge.textContent = 'Manual';
           targetModeBadge.style.background = '#dbeafe';
@@ -707,34 +1000,24 @@
         }
       }
 
-      // ---- core timer logic ----
       function startTimer() {
         if (isRunning) return;
-
-        // Reset end time if any
         endTime = null;
         endTimestampEl.textContent = '—';
-
         startTime = new Date();
         startTimestampEl.textContent = formatTimestamp(startTime);
-
         elapsedSeconds = 0;
         updateMainDisplayFromSeconds(0);
-
         isRunning = true;
         updateButtonsAndStatus();
 
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
           if (!isRunning || !startTime) return;
-
           const now = Date.now();
-          const startMs = startTime.getTime();
-          const diffSec = Math.floor((now - startMs) / 1000);
+          const diffSec = Math.floor((now - startTime.getTime()) / 1000);
           elapsedSeconds = diffSec;
           updateMainDisplayFromSeconds(elapsedSeconds);
-
-          // Auto-stop if target active and reached
           if (targetDurationSec > 0 && elapsedSeconds >= targetDurationSec) {
             stopTimer(true);
           }
@@ -744,18 +1027,14 @@
       function stopTimer(isAuto = false) {
         if (!isRunning && !isAuto) return;
         if (!isRunning && isAuto) return;
-
         endTime = new Date();
         endTimestampEl.textContent = formatTimestamp(endTime);
-
         if (timerInterval) {
           clearInterval(timerInterval);
           timerInterval = null;
         }
-
         isRunning = false;
         updateButtonsAndStatus();
-
         if (startTime) {
           const diffSec = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
           elapsedSeconds = diffSec;
@@ -768,30 +1047,23 @@
           clearInterval(timerInterval);
           timerInterval = null;
         }
-
         isRunning = false;
         startTime = null;
         endTime = null;
         elapsedSeconds = 0;
-
         startTimestampEl.textContent = '—';
         endTimestampEl.textContent = '—';
         mainDisplay.textContent = '00:00:00';
         subDisplay.textContent = 'hours : minutes : seconds';
         statusIndicator.textContent = '⏸️ IDLE';
         statusIndicator.classList.remove('running');
-
-        // Reset target to default: no target, keep running until stopped
         targetMode = 'none';
         targetDurationSec = 0;
         quickChips.forEach(c => c.classList.remove('active'));
-
-        // Reset manual inputs to 0h 0m 30s but targetMode none means they are ignored
         hoursInput.value = 0;
         minutesInput.value = 0;
         secondsInput.value = 30;
         enforceManualLimits();
-
         updateTargetDisplay();
         updateModeUI();
         updateButtonsAndStatus();
@@ -811,38 +1083,18 @@
         }
       }
 
-      // ---- event listeners ----
-      startBtn.addEventListener('click', () => {
-        if (isRunning) return;
-        startTimer();
-      });
+      startBtn.addEventListener('click', () => { if (!isRunning) startTimer(); });
+      stopBtn.addEventListener('click', () => { if (isRunning) stopTimer(false); });
+      clearBtn.addEventListener('click', clearAll);
 
-      stopBtn.addEventListener('click', () => {
-        if (!isRunning) return;
-        stopTimer(false);
-      });
-
-      clearBtn.addEventListener('click', () => {
-        clearAll();
-      });
-
-      // Mode toggle
       modeManualBtn.addEventListener('click', () => {
-        // Switch to manual mode, but keep target value if it was set manually or quick
-        // We'll set targetMode to 'manual' if there's a valid duration, else none
-        if (targetDurationSec > 0) {
-          targetMode = 'manual';
-        } else {
-          targetMode = 'none';
-        }
-        // Clear active chips
+        targetMode = targetDurationSec > 0 ? 'manual' : 'none';
         quickChips.forEach(c => c.classList.remove('active'));
         updateModeUI();
         updateTargetDisplay();
       });
 
       modeQuickBtn.addEventListener('click', () => {
-        // Switch to quick mode; if no chip active, don't set target
         const activeChip = document.querySelector('.quick-chip.active');
         if (activeChip) {
           targetMode = 'quick';
@@ -855,12 +1107,10 @@
         updateTargetDisplay();
       });
 
-      // Quick chip clicks
       quickChips.forEach(chip => {
-        chip.addEventListener('click', (e) => {
+        chip.addEventListener('click', () => {
           const sec = parseInt(chip.dataset.sec, 10);
           if (targetMode !== 'quick') {
-            // switch to quick mode when clicking a chip
             targetMode = 'quick';
             updateModeUI();
           }
@@ -868,9 +1118,7 @@
         });
       });
 
-      // Apply manual button
       applyManualBtn.addEventListener('click', () => {
-        // If we're in quick mode, switch to manual
         if (targetMode === 'quick') {
           targetMode = 'manual';
           quickChips.forEach(c => c.classList.remove('active'));
@@ -879,21 +1127,9 @@
         applyManualTarget();
       });
 
-      // Enforce limits on blur/change
       [hoursInput, minutesInput, secondsInput].forEach(input => {
-        input.addEventListener('change', () => {
-          enforceManualLimits();
-          // If in manual mode, auto-apply? No, user must click Apply. But we can update if targetMode manual? 
-          // Better UX: if in manual mode and user changes values, we don't auto-apply, but we could.
-          // Let's keep Apply button for explicit action.
-        });
-        input.addEventListener('blur', () => {
-          enforceManualLimits();
-        });
-      });
-
-      // Handle Enter key on inputs to apply
-      [hoursInput, minutesInput, secondsInput].forEach(input => {
+        input.addEventListener('change', enforceManualLimits);
+        input.addEventListener('blur', enforceManualLimits);
         input.addEventListener('keypress', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
@@ -907,7 +1143,6 @@
         });
       });
 
-      // Visibility change to keep time accurate
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && isRunning && startTime) {
           const now = Date.now();
@@ -917,15 +1152,10 @@
         }
       });
 
-      // ---- init ----
-      function init() {
-        clearAll(); // sets everything to default (target none)
-        // Ensure default display shows keep running
-        updateTargetDisplay();
-        updateModeUI();
-      }
-
-      init();
+      // init
+      clearAll();
+      updateTargetDisplay();
+      updateModeUI();
     })();
   </script>
 </body>
