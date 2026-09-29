@@ -12,18 +12,18 @@
 
   <!--
     ═══════════════════════════════════════════════════════════
-    CHRONO — v1.6.0
+    CHRONO — v1.7.0
     ═══════════════════════════════════════════════════════════
+    • Timer always on ONE line (clamp-based font sizing)
+    • After Stop → full "Session Report" card:
+        - Total time taken
+        - Start & end timestamps
+        - Target (if any) + hit/miss
+        - Duration in hours / minutes / seconds
+    • Floating FAB: Delete / Pause / Resume
     • Top button: Start ⇄ Stop only
-    • Floating button (bottom-right) shows:
-        - Delete  (timer at 0, or after Stop)
-        - Pause   (while running)
-        - Resume  (while paused)
-    • After Resume → shows Pause again
-    • Version at BOTTOM-LEFT (small)
-    • Start/End timestamps on their OWN LINE (full-width row)
-    • Target popup via filter icon (top-left)
-    • Light theme-color (no black browser bar)
+    • Filter icon → target popup
+    • Version bottom-left
     ═══════════════════════════════════════════════════════════
   -->
 
@@ -55,7 +55,7 @@
       border-radius: 2rem;
       box-shadow: 0 30px 60px -25px rgba(0, 20, 40, 0.28),
                   inset 0 1px 2px rgba(255, 255, 255, 0.9);
-      padding: 1.5rem 1.5rem 1.75rem;
+      padding: 1.5rem 1.25rem 1.75rem;
       border: 1px solid rgba(255, 255, 255, 0.7);
       position: relative;
     }
@@ -141,18 +141,26 @@
     .install-btn.visible { display: inline-flex; }
     .install-btn:hover { background: #d4e6f7; }
 
-    /* ---------- huge time ---------- */
+    /* ═══════════════════════════════════════════════════════
+       HUGE TIME — always one line, scales to fit width
+       ═══════════════════════════════════════════════════════ */
     .main-time {
-      font-size: 5.8rem;
-      font-weight: 600;
       font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+      font-weight: 600;
       color: #0f1a26;
-      letter-spacing: 1px;
       line-height: 1;
       text-align: center;
       padding: 0.6rem 0 1.3rem;
-      word-break: break-word;
       transition: color 0.2s;
+
+      /* One-line, scale-to-fit */
+      font-size: clamp(2rem, 18vw, 6.5rem);
+      white-space: nowrap;
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      text-overflow: clip;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
     }
 
     .main-time.running { color: #166534; }
@@ -215,54 +223,141 @@
 
     .toggle-btn .btn-icon { font-size: 1.3rem; line-height: 1; }
 
-    /* ---------- timestamps on their own full-width line ---------- */
-    .timestamp-block {
+    /* ═══════════════════════════════════════════════════════
+       SESSION REPORT CARD (shown after Stop)
+       ═══════════════════════════════════════════════════════ */
+    .report-card {
       display: none;
-      flex-direction: column;
-      gap: 0.55rem;
-      background: #f8fafd;
-      border: 1px solid #e2eaf3;
-      border-radius: 1.25rem;
-      padding: 0.9rem 1.1rem;
-      animation: slideDown 0.3s ease;
+      background: linear-gradient(160deg, #f8fbff 0%, #eef4fb 100%);
+      border: 1px solid #dbe6f2;
+      border-radius: 1.5rem;
+      padding: 1.25rem 1.15rem;
       margin-bottom: 0.5rem;
+      animation: reportIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.9),
+                  0 8px 20px -12px rgba(30, 43, 58, 0.2);
     }
 
-    .timestamp-block.visible { display: flex; }
+    .report-card.visible { display: block; }
 
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-6px); }
+    @keyframes reportIn {
+      from { opacity: 0; transform: translateY(-8px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .timestamp-line {
+    .report-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.9rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #e2eaf3;
+    }
+
+    .report-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #1e5a7a;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .report-status {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      padding: 0.2rem 0.7rem;
+      border-radius: 30px;
+      background: #e2f3e6;
+      color: #166534;
+      border: 1px solid #b7e0c4;
+      font-family: 'SF Mono', monospace;
+    }
+
+    .report-status.miss {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
+    /* big total duration in report */
+    .report-total {
+      text-align: center;
+      padding: 0.5rem 0 0.9rem;
+      border-bottom: 1px dashed #d0dae6;
+      margin-bottom: 0.9rem;
+    }
+
+    .report-total-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #8b9aad;
+      margin-bottom: 0.35rem;
+    }
+
+    .report-total-time {
+      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: #166534;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .report-total-human {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #5f6f84;
+      margin-top: 0.3rem;
+    }
+
+    /* detail rows */
+    .report-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .report-row {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
       gap: 0.75rem;
     }
 
-    .timestamp-line .label {
+    .report-row .r-label {
       font-size: 0.62rem;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
       font-weight: 700;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
       color: #8b9aad;
       flex-shrink: 0;
     }
 
-    .timestamp-line .value {
+    .report-row .r-value {
       font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
       font-size: 0.85rem;
-      font-weight: 500;
+      font-weight: 600;
       color: #1a2b3e;
+      text-align: right;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      text-align: right;
     }
 
-    /* ---------- version bottom-left ---------- */
+    .report-row .r-value.green { color: #166534; }
+    .report-row .r-value.red   { color: #991b1b; }
+
+    /* version bottom-left */
     .version-corner {
       position: fixed;
       bottom: 1rem;
@@ -283,8 +378,7 @@
     }
 
     /* ═══════════════════════════════════════════════════════
-       FLOATING CONTEXTUAL BUTTON
-       Delete / Pause / Resume
+       FLOATING BUTTON (Delete / Pause / Resume)
        ═══════════════════════════════════════════════════════ */
     .fab {
       position: fixed;
@@ -307,9 +401,7 @@
     .fab svg {
       width: 26px;
       height: 26px;
-      stroke: currentColor;
       stroke-width: 2.4;
-      fill: none;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
@@ -317,35 +409,24 @@
     .fab:hover { transform: translateY(-3px) scale(1.05); }
     .fab:active { transform: translateY(0) scale(1); }
 
-    /* Pause (red) — shown while running */
     .fab.pause {
       background: #dc2626;
       border-color: #b91c1c;
       box-shadow: 0 12px 26px -8px rgba(220, 38, 38, 0.55),
                   0 4px 10px rgba(0, 0, 0, 0.08);
     }
-    .fab.pause:hover {
-      background: #b91c1c;
-      box-shadow: 0 18px 32px -10px rgba(220, 38, 38, 0.65),
-                  0 4px 10px rgba(0, 0, 0, 0.08);
-    }
+    .fab.pause:hover { background: #b91c1c; }
     .fab.pause svg { fill: currentColor; stroke: none; }
 
-    /* Resume (amber) — shown while paused */
     .fab.resume {
       background: #b45309;
       border-color: #92400e;
       box-shadow: 0 12px 26px -8px rgba(180, 83, 9, 0.55),
                   0 4px 10px rgba(0, 0, 0, 0.08);
     }
-    .fab.resume:hover {
-      background: #92400e;
-      box-shadow: 0 18px 32px -10px rgba(180, 83, 9, 0.65),
-                  0 4px 10px rgba(0, 0, 0, 0.08);
-    }
+    .fab.resume:hover { background: #92400e; }
     .fab.resume svg { fill: currentColor; stroke: none; }
 
-    /* Delete (soft amber) — idle or stopped */
     .fab.delete {
       background: white;
       color: #b45309;
@@ -353,13 +434,9 @@
       box-shadow: 0 10px 24px -8px rgba(180, 83, 9, 0.35),
                   0 4px 10px rgba(0, 0, 0, 0.06);
     }
-    .fab.delete:hover {
-      background: #fff2e5;
-      box-shadow: 0 16px 32px -10px rgba(180, 83, 9, 0.45),
-                  0 4px 10px rgba(0, 0, 0, 0.06);
-    }
+    .fab.delete:hover { background: #fff2e5; }
+    .fab.delete svg { stroke: currentColor; fill: none; }
 
-    /* tooltip */
     .fab .fab-tip {
       position: absolute;
       right: 76px;
@@ -379,9 +456,7 @@
 
     .fab:hover .fab-tip { opacity: 1; }
 
-    /* ═══════════════════════════════════════════════════════
-       MODALS
-       ═══════════════════════════════════════════════════════ */
+    /* ---------- modals ---------- */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -640,19 +715,19 @@
     }
 
     @media (max-width: 560px) {
-      .main-time { font-size: 4.6rem; padding: 0.5rem 0 1rem; }
-      .app-card { padding: 1.25rem; border-radius: 1.75rem; }
+      .app-card { padding: 1.25rem 1rem 1.5rem; border-radius: 1.75rem; }
       .toggle-btn { padding: 1rem 1.1rem; font-size: 1.05rem; }
       .manual-entry .field-group { min-width: 65px; }
       .fab { width: 58px; height: 58px; bottom: 1.25rem; right: 1.25rem; }
       .fab svg { width: 24px; height: 24px; }
       .fab .fab-tip { display: none; }
       .version-corner { bottom: 0.85rem; left: 0.9rem; font-size: 0.58rem; }
+      .report-total-time { font-size: 2.2rem; }
     }
 
     @media (max-width: 380px) {
-      .main-time { font-size: 3.6rem; }
       .quick-chip { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+      .report-total-time { font-size: 1.9rem; }
     }
   </style>
 </head>
@@ -668,6 +743,7 @@
       <button class="install-btn" id="installBtn" title="Install app">⬇️ Install</button>
     </div>
 
+    <!-- HUGE one-line timer -->
     <div class="main-time" id="mainDisplay">00:00:00</div>
 
     <div class="target-pill" id="targetPill">
@@ -680,21 +756,42 @@
       <span id="toggleLabel">Start</span>
     </button>
 
-    <!-- timestamps on their own full-width line, hidden until stopped -->
-    <div class="timestamp-block" id="timestampBlock">
-      <div class="timestamp-line">
-        <span class="label">Start</span>
-        <span class="value" id="startTimestamp">—</span>
+    <!-- ═══ SESSION REPORT (shown after Stop) ═══ -->
+    <div class="report-card" id="reportCard">
+      <div class="report-header">
+        <div class="report-title">📋 Session report</div>
+        <div class="report-status" id="reportStatus">Completed</div>
       </div>
-      <div class="timestamp-line">
-        <span class="label">End</span>
-        <span class="value" id="endTimestamp">—</span>
+
+      <div class="report-total">
+        <div class="report-total-label">Total time taken</div>
+        <div class="report-total-time" id="reportTotalTime">00:00:00</div>
+        <div class="report-total-human" id="reportTotalHuman">0 hours · 0 minutes · 0 seconds</div>
+      </div>
+
+      <div class="report-details">
+        <div class="report-row">
+          <span class="r-label">Start</span>
+          <span class="r-value" id="reportStart">—</span>
+        </div>
+        <div class="report-row">
+          <span class="r-label">End</span>
+          <span class="r-value" id="reportEnd">—</span>
+        </div>
+        <div class="report-row">
+          <span class="r-label">Target</span>
+          <span class="r-value" id="reportTarget">None</span>
+        </div>
+        <div class="report-row">
+          <span class="r-label">Result</span>
+          <span class="r-value" id="reportResult">—</span>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- version bottom-left -->
-  <div class="version-corner" id="versionCorner">v1.6.0</div>
+  <div class="version-corner" id="versionCorner">v1.7.0</div>
 
   <!-- floating contextual button -->
   <button class="fab delete" id="fab" title="Delete">
@@ -763,7 +860,7 @@
         </svg>
       </div>
       <h3>Clear all data?</h3>
-      <p>This will reset the timer, clear timestamps, remove the target, and wipe saved state from this device.</p>
+      <p>This will reset the timer, clear the report, remove the target, and wipe saved state from this device.</p>
       <div class="modal-actions">
         <button class="modal-clear" id="cancelClear">Cancel</button>
         <button class="modal-danger" id="confirmClear">Clear</button>
@@ -778,7 +875,7 @@
   </div>
 
   <script>
-    const APP_VERSION = '1.6.0';
+    const APP_VERSION = '1.7.0';
     const STORAGE_KEY = 'chronoPro.state';
 
     /* ---------- inline PWA manifest ---------- */
@@ -886,25 +983,16 @@
        TIMER
        ═══════════════════════════════════════════════════════════ */
     (function timerApp() {
-      /* modes:
-         'idle'    → timer at 0, FAB = Delete
-         'running' → counting, FAB = Pause
-         'paused'  → frozen mid-count, FAB = Resume
-         'stopped' → finished, FAB = Delete
-      */
       let mode = 'idle';
       let startTime = null;
       let endTime = null;
       let elapsedSeconds = 0;
-      let accumulatedMs = 0;   // ms already banked (before current run or before pause)
+      let accumulatedMs = 0;
       let timerInterval = null;
       let targetDurationSec = 0;
 
       /* DOM */
       const mainDisplay = document.getElementById('mainDisplay');
-      const startTimestampEl = document.getElementById('startTimestamp');
-      const endTimestampEl = document.getElementById('endTimestamp');
-      const timestampBlock = document.getElementById('timestampBlock');
 
       const toggleBtn = document.getElementById('toggleBtn');
       const toggleIcon = document.getElementById('toggleIcon');
@@ -926,6 +1014,15 @@
       const fab = document.getElementById('fab');
       const fabIcon = document.getElementById('fabIcon');
       const fabTip = document.getElementById('fabTip');
+
+      const reportCard = document.getElementById('reportCard');
+      const reportStatus = document.getElementById('reportStatus');
+      const reportTotalTime = document.getElementById('reportTotalTime');
+      const reportTotalHuman = document.getElementById('reportTotalHuman');
+      const reportStart = document.getElementById('reportStart');
+      const reportEnd = document.getElementById('reportEnd');
+      const reportTarget = document.getElementById('reportTarget');
+      const reportResult = document.getElementById('reportResult');
 
       const hoursInput = document.getElementById('hoursInput');
       const minutesInput = document.getElementById('minutesInput');
@@ -952,9 +1049,13 @@
         fabIcon.innerHTML = kind === 'pause' ? ICON_PAUSE
                           : kind === 'resume' ? ICON_PLAY
                           : ICON_TRASH;
-        // Pause & Resume use filled icons
-        fabIcon.style.fill = (kind === 'pause' || kind === 'resume') ? 'currentColor' : 'none';
-        fabIcon.style.stroke = (kind === 'pause' || kind === 'resume') ? 'none' : 'currentColor';
+        if (kind === 'pause' || kind === 'resume') {
+          fabIcon.style.fill = 'currentColor';
+          fabIcon.style.stroke = 'none';
+        } else {
+          fabIcon.style.fill = 'none';
+          fabIcon.style.stroke = 'currentColor';
+        }
       }
 
       /* ---------- storage ---------- */
@@ -1028,7 +1129,20 @@
         return `${h}:${m}:${s}`;
       }
 
-      function targetPillLabel(sec) {
+      function humanDuration(totalSeconds) {
+        totalSeconds = Math.floor(Math.max(0, totalSeconds));
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        const parts = [];
+        parts.push(`${h} hour${h !== 1 ? 's' : ''}`);
+        parts.push(`${m} minute${m !== 1 ? 's' : ''}`);
+        parts.push(`${s} second${s !== 1 ? 's' : ''}`);
+        return parts.join(' · ');
+      }
+
+      function targetLabel(sec) {
+        if (!sec || sec <= 0) return 'None';
         const h = Math.floor(sec / 3600);
         const m = Math.floor((sec % 3600) / 60);
         const s = sec % 60;
@@ -1036,7 +1150,7 @@
         if (h > 0) parts.push(`${h}h`);
         if (m > 0) parts.push(`${m}m`);
         if (s > 0) parts.push(`${s}s`);
-        return parts.join(' ') || '0s';
+        return parts.join(' ');
       }
 
       /* ---------- UI updaters ---------- */
@@ -1071,7 +1185,6 @@
           fabTip.textContent = 'Resume';
           setFabIcon('resume');
         } else {
-          // idle or stopped → delete
           fab.classList.add('delete');
           fabTip.textContent = 'Delete';
           setFabIcon('delete');
@@ -1081,9 +1194,9 @@
       function updateTargetUI() {
         if (targetDurationSec > 0) {
           filterBtn.classList.add('has-target');
-          targetDot.textContent = targetPillLabel(targetDurationSec).replace(/\s+/g, '');
+          targetDot.textContent = targetLabel(targetDurationSec).replace(/\s+/g, '');
           targetPill.classList.add('visible');
-          targetPillText.textContent = `Auto-stop after ${targetPillLabel(targetDurationSec)}`;
+          targetPillText.textContent = `Auto-stop after ${targetLabel(targetDurationSec)}`;
         } else {
           filterBtn.classList.remove('has-target');
           targetPill.classList.remove('visible');
@@ -1100,14 +1213,49 @@
         });
       }
 
-      function updateTimestampUI() {
-        if (mode === 'stopped' && endTime) {
-          timestampBlock.classList.add('visible');
-          startTimestampEl.textContent = startTime ? formatTimestamp(startTime) : '—';
-          endTimestampEl.textContent = formatTimestamp(endTime);
-        } else {
-          timestampBlock.classList.remove('visible');
+      function buildReport() {
+        if (mode !== 'stopped' || !endTime || !startTime) {
+          reportCard.classList.remove('visible');
+          return;
         }
+
+        // Total time taken
+        const totalSec = elapsedSeconds;
+        reportTotalTime.textContent = secondsToHMS(totalSec);
+        reportTotalHuman.textContent = humanDuration(totalSec);
+
+        // Start / End
+        reportStart.textContent = formatTimestamp(startTime);
+        reportEnd.textContent = formatTimestamp(endTime);
+
+        // Target
+        if (targetDurationSec > 0) {
+          reportTarget.textContent = targetLabel(targetDurationSec);
+          reportTarget.classList.remove('green', 'red');
+
+          if (totalSec >= targetDurationSec) {
+            reportResult.textContent = '✅ Target reached';
+            reportResult.classList.remove('red');
+            reportResult.classList.add('green');
+            reportStatus.textContent = 'Completed';
+            reportStatus.classList.remove('miss');
+          } else {
+            const shortBy = targetDurationSec - totalSec;
+            reportResult.textContent = `⚠️ Short by ${targetLabel(shortBy)}`;
+            reportResult.classList.remove('green');
+            reportResult.classList.add('red');
+            reportStatus.textContent = 'Incomplete';
+            reportStatus.classList.add('miss');
+          }
+        } else {
+          reportTarget.textContent = 'None';
+          reportResult.textContent = 'Stopped manually';
+          reportResult.classList.remove('green', 'red');
+          reportStatus.textContent = 'Completed';
+          reportStatus.classList.remove('miss');
+        }
+
+        reportCard.classList.add('visible');
       }
 
       /* ---------- core actions ---------- */
@@ -1118,10 +1266,10 @@
         startTime = new Date();
         endTime = null;
         mode = 'running';
+        reportCard.classList.remove('visible');
         updateMainDisplay();
         updateToggleUI();
         updateFabUI();
-        updateTimestampUI();
         saveState();
         tick();
         timerInterval = setInterval(tick, 200);
@@ -1167,7 +1315,7 @@
         updateMainDisplay();
         updateToggleUI();
         updateFabUI();
-        updateTimestampUI();
+        buildReport();
         saveState();
       }
 
@@ -1181,13 +1329,13 @@
         }
       }
 
-      /* ---------- main toggle button (only Start ⇄ Stop) ---------- */
+      /* ---------- toggle button ---------- */
       toggleBtn.addEventListener('click', () => {
         if (mode === 'idle' || mode === 'stopped') startFresh();
         else stopTimer();
       });
 
-      /* ---------- floating contextual button ---------- */
+      /* ---------- FAB ---------- */
       fab.addEventListener('click', () => {
         if (mode === 'running') pauseTimer();
         else if (mode === 'paused') resumeTimer();
@@ -1289,11 +1437,11 @@
         hoursInput.value = 0;
         minutesInput.value = 0;
         secondsInput.value = 0;
+        reportCard.classList.remove('visible');
 
         updateTargetUI();
         updateToggleUI();
         updateFabUI();
-        updateTimestampUI();
         closeDeleteModal();
       });
 
@@ -1318,12 +1466,11 @@
           updateMainDisplay();
           updateToggleUI();
           updateFabUI();
-          updateTimestampUI();
+          if (mode === 'stopped') buildReport();
         } else {
           updateTargetUI();
           updateToggleUI();
           updateFabUI();
-          updateTimestampUI();
         }
       }
 
