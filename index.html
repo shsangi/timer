@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chrono · Pro Timer & Stopwatch</title>
+  <style>
+    /* modern, professional palette — clean neutrals with subtle depth */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #f5f7fc 0%, #e9ecf3 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    .app-card {
+      max-width: 700px;
+      width: 100%;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 3rem;
+      box-shadow: 0 30px 50px -20px rgba(0,20,40,0.25),
+                  inset 0 1px 2px rgba(255,255,255,0.8);
+      padding: 2rem 2rem 2rem 2rem;
+      border: 1px solid rgba(255,255,255,0.5);
+      transition: all 0.2s ease;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #1e2b3a;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.8rem;
+      padding-left: 0.25rem;
+    }
+
+    h1 span {
+      background: #1e2b3a;
+      color: white;
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 0.2rem 0.8rem;
+      border-radius: 30px;
+      letter-spacing: 0.3px;
+    }
+
+    /* ---- timer display area ---- */
+    .display-panel {
+      background: #ffffffd6;
+      backdrop-filter: blur(4px);
+      border-radius: 2.5rem;
+      padding: 1.8rem 1.2rem;
+      box-shadow: inset 0 6px 12px rgba(0,0,0,0.02), 0 8px 18px -8px rgba(0,20,40,0.1);
+      border: 1px solid #ffffff;
+      margin-bottom: 1.6rem;
+    }
+
+    .timestamp-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.75rem 1.5rem;
+      margin-bottom: 1.2rem;
+      padding: 0 0.4rem;
+    }
+
+    .timestamp-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .timestamp-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 600;
+      color: #6b7b8f;
+    }
+
+    .timestamp-value {
+      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #1a2b3e;
+      background: #f0f4fa;
+      padding: 0.3rem 0.8rem;
+      border-radius: 30px;
+      border: 1px solid #d9e2ec;
+      box-shadow: inset 0 1px 2px #ffffff, 0 1px 2px rgba(0,0,0,0.02);
+      white-space: nowrap;
+    }
+
+    .main-time {
+      font-size: 3.5rem;
+      font-weight: 600;
+      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+      color: #0f1a26;
+      letter-spacing: 1px;
+      line-height: 1.2;
+      text-align: center;
+      word-break: break-word;
+      padding: 0.2rem 0;
+      margin: 0.2rem 0 0.1rem;
+    }
+
+    .sub-time {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #5f6f84;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+      background: #eef2f8;
+      display: inline-block;
+      padding: 0.25rem 1rem;
+      border-radius: 30px;
+      margin: 0 auto 0.2rem;
+    }
+
+    /* duration selector */
+    .duration-selector {
+      background: #eef2f8;
+      border-radius: 60px;
+      padding: 0.25rem 0.25rem 0.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.8rem;
+      border: 1px solid #d9e2ec;
+    }
+
+    .duration-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #3a4b60;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .duration-inputs {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
+    .duration-field {
+      display: flex;
+      align-items: center;
+      background: white;
+      border-radius: 40px;
+      padding: 0.1rem 0.2rem 0.1rem 0.8rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+    }
+
+    .duration-field input {
+      width: 60px;
+      border: none;
+      background: transparent;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e2b3a;
+      font-family: 'SF Mono', monospace;
+      padding: 0.4rem 0;
+      outline: none;
+      text-align: right;
+    }
+
+    .duration-field input::-webkit-outer-spin-button,
+    .duration-field input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .duration-field span {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b7b8f;
+      padding: 0 0.5rem 0 0.2rem;
+      text-transform: uppercase;
+    }
+
+    .duration-field input:focus {
+      color: #0d6b9e;
+    }
+
+    .select-wrap {
+      background: white;
+      border-radius: 40px;
+      padding: 0.2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+    }
+
+    select {
+      border: none;
+      background: transparent;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.6rem 1rem 0.6rem 1rem;
+      border-radius: 40px;
+      color: #1e2b3a;
+      outline: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* buttons */
+    .button-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn {
+      flex: 1 1 120px;
+      padding: 0.9rem 1.2rem;
+      border: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      background: white;
+      color: #1e2b3a;
+      box-shadow: 0 6px 12px -6px rgba(0,20,40,0.1), 0 2px 4px rgba(0,0,0,0.02);
+      transition: all 0.2s ease;
+      border: 1px solid #e2e8f0;
+      letter-spacing: 0.2px;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: #f8fafd;
+      box-shadow: 0 10px 18px -8px rgba(0,80,120,0.15);
+      transform: translateY(-1px);
+      border-color: #cbd5e0;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .btn.primary {
+      background: #1e2b3a;
+      color: white;
+      border-color: #1e2b3a;
+      box-shadow: 0 10px 20px -8px #1e2b3a80, 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn.primary:hover {
+      background: #263a4f;
+      border-color: #263a4f;
+    }
+
+    .btn.warning {
+      background: #fff2e5;
+      color: #b45309;
+      border-color: #fed7aa;
+    }
+
+    .btn.warning:hover {
+      background: #ffe8d6;
+    }
+
+    .btn.outline {
+      background: transparent;
+      border: 1.5px solid #d0dae6;
+      box-shadow: none;
+    }
+
+    .btn.outline:hover {
+      background: #f0f4fa;
+      border-color: #a0b3c9;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      pointer-events: none;
+      filter: grayscale(0.4);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      background: #e6f0fa;
+      border-radius: 40px;
+      padding: 0.35rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #1e5a7a;
+      margin-top: 1rem;
+      width: fit-content;
+      border: 1px solid #cde0f0;
+    }
+
+    .status-badge.running {
+      background: #e2f3e6;
+      color: #166534;
+      border-color: #b7e0c4;
+    }
+
+    .footer-note {
+      font-size: 0.7rem;
+      color: #8b9aad;
+      text-align: center;
+      margin-top: 1.2rem;
+      letter-spacing: 0.2px;
+    }
+
+    /* responsive */
+    @media (max-width: 500px) {
+      .app-card { padding: 1.5rem 1rem; border-radius: 2rem; }
+      .main-time { font-size: 2.5rem; }
+      .duration-selector { flex-direction: column; align-items: flex-start; padding: 1rem; }
+      .duration-inputs { margin-left: 0; width: 100%; }
+      .btn { padding: 0.8rem 0.8rem; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-card">
+    <h1>⏱️ chrono <span>PRO</span></h1>
+
+    <!-- display panel -->
+    <div class="display-panel">
+      <div class="timestamp-row">
+        <div class="timestamp-item">
+          <span class="timestamp-label">Start</span>
+          <span class="timestamp-value" id="startTimestamp">—</span>
+        </div>
+        <div class="timestamp-item">
+          <span class="timestamp-label">End</span>
+          <span class="timestamp-value" id="endTimestamp">—</span>
+        </div>
+      </div>
+
+      <!-- main elapsed / stopwatch display -->
+      <div class="main-time" id="mainDisplay">00:00:00</div>
+      <div class="sub-time" id="subDisplay">hours : minutes : seconds</div>
+
+      <!-- running / status indicator -->
+      <div id="statusIndicator" class="status-badge">⏸️ IDLE</div>
+    </div>
+
+    <!-- duration selector: 0–16 hours, 0–59 minutes, 0–59 seconds (min 30s total) -->
+    <div class="duration-selector">
+      <span class="duration-label">🎯 Target duration</span>
+      <div class="duration-inputs">
+        <div class="duration-field">
+          <input type="number" id="hoursInput" min="0" max="16" value="0" step="1">
+          <span>h</span>
+        </div>
+        <div class="duration-field">
+          <input type="number" id="minutesInput" min="0" max="59" value="0" step="1">
+          <span>m</span>
+        </div>
+        <div class="duration-field">
+          <input type="number" id="secondsInput" min="0" max="59" value="30" step="1">
+          <span>s</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- control buttons -->
+    <div class="button-grid">
+      <button class="btn primary" id="startBtn">▶ Start</button>
+      <button class="btn warning" id="stopBtn" disabled>⏹ Stop</button>
+      <button class="btn outline" id="clearBtn">🧹 Clear</button>
+    </div>
+
+    <!-- subtle helper -->
+    <div class="footer-note">
+      keep running in background · timestamps update live
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ---- state ----
+      let startTime = null;            // Date object when started
+      let endTime = null;             // Date object when stopped
+      let timerInterval = null;
+      let isRunning = false;
+      let elapsedSeconds = 0;          // used for stopwatch display
+      let lastTickTime = null;
+
+      // DOM elements
+      const startTimestampEl = document.getElementById('startTimestamp');
+      const endTimestampEl = document.getElementById('endTimestamp');
+      const mainDisplay = document.getElementById('mainDisplay');
+      const subDisplay = document.getElementById('subDisplay');
+      const statusIndicator = document.getElementById('statusIndicator');
+
+      const startBtn = document.getElementById('startBtn');
+      const stopBtn = document.getElementById('stopBtn');
+      const clearBtn = document.getElementById('clearBtn');
+
+      const hoursInput = document.getElementById('hoursInput');
+      const minutesInput = document.getElementById('minutesInput');
+      const secondsInput = document.getElementById('secondsInput');
+
+      // ---- helpers ----
+      function formatTimestamp(date) {
+        if (!date) return '—';
+        // format: YYYY-MM-DD HH:MM:SS (professional ISO-like)
+        const y = date.getFullYear();
+        const mo = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const h = String(date.getHours()).padStart(2, '0');
+        const mi = String(date.getMinutes()).padStart(2, '0');
+        const s = String(date.getSeconds()).padStart(2, '0');
+        return `${y}-${mo}-${d} ${h}:${mi}:${s}`;
+      }
+
+      // Convert seconds to HH:MM:SS (with leading zeros)
+      function secondsToHMS(totalSeconds) {
+        totalSeconds = Math.floor(totalSeconds);
+        const hrs = Math.floor(totalSeconds / 3600);
+        const mins = Math.floor((totalSeconds % 3600) / 60);
+        const secs = totalSeconds % 60;
+        return {
+          h: String(hrs).padStart(2, '0'),
+          m: String(mins).padStart(2, '0'),
+          s: String(secs).padStart(2, '0')
+        };
+      }
+
+      // Update main display from elapsed seconds
+      function updateMainDisplayFromSeconds(totalSec) {
+        const { h, m, s } = secondsToHMS(totalSec);
+        mainDisplay.textContent = `${h}:${m}:${s}`;
+        subDisplay.textContent = `${h} hours · ${m} minutes · ${s} seconds`;
+      }
+
+      // get total target duration in seconds from inputs
+      function getTargetDurationSeconds() {
+        const h = parseInt(hoursInput.value, 10) || 0;
+        const m = parseInt(minutesInput.value, 10) || 0;
+        const s = parseInt(secondsInput.value, 10) || 0;
+        return (h * 3600) + (m * 60) + s;
+      }
+
+      // validate & enforce duration constraints: 30 sec to 16h
+      function enforceDurationLimits() {
+        let h = parseInt(hoursInput.value, 10) || 0;
+        let m = parseInt(minutesInput.value, 10) || 0;
+        let s = parseInt(secondsInput.value, 10) || 0;
+
+        // clamp individual fields
+        h = Math.min(16, Math.max(0, h));
+        m = Math.min(59, Math.max(0, m));
+        s = Math.min(59, Math.max(0, s));
+
+        // total seconds
+        let totalSec = h * 3600 + m * 60 + s;
+        const MIN_SEC = 30;
+        const MAX_SEC = 16 * 3600; // 57600
+
+        if (totalSec < MIN_SEC) {
+          totalSec = MIN_SEC;
+        } else if (totalSec > MAX_SEC) {
+          totalSec = MAX_SEC;
+        }
+
+        // redistribute back to fields
+        const newH = Math.floor(totalSec / 3600);
+        const newM = Math.floor((totalSec % 3600) / 60);
+        const newS = totalSec % 60;
+
+        hoursInput.value = newH;
+        minutesInput.value = newM;
+        secondsInput.value = newS;
+      }
+
+      // attach input events for live clamping (but avoid annoying jumps)
+      [hoursInput, minutesInput, secondsInput].forEach(input => {
+        input.addEventListener('change', enforceDurationLimits);
+        input.addEventListener('blur', enforceDurationLimits);
+      });
+
+      // ---- core timer logic ----
+      function startTimer() {
+        if (isRunning) return;
+
+        // if there is an existing end timestamp (stopped state), reset end and continue?
+        // we want a fresh start. So clear end timestamp, reset elapsed, set new start.
+        // However, to preserve "resume" behaviour? The spec doesn't ask. We'll start fresh clean.
+        if (endTime !== null) {
+          // if we were stopped and press start again → treat as new session.
+          endTime = null;
+          endTimestampEl.textContent = '—';
+        }
+
+        // set start time to now
+        startTime = new Date();
+        startTimestampEl.textContent = formatTimestamp(startTime);
+        endTime = null;
+        endTimestampEl.textContent = '—';
+
+        // reset elapsed seconds (we'll compute from start time)
+        elapsedSeconds = 0;
+        updateMainDisplayFromSeconds(0);
+
+        isRunning = true;
+        updateButtonsAndStatus();
+
+        // record tick time for background-safe delta
+        lastTickTime = Date.now();
+
+        // start interval (1s)
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          if (!isRunning || !startTime) return;
+
+          // Background-safe: use Date difference so it stays accurate even if tab inactive
+          const now = Date.now();
+          const startMs = startTime.getTime();
+          const diffSec = Math.floor((now - startMs) / 1000);
+          elapsedSeconds = diffSec;
+          updateMainDisplayFromSeconds(elapsedSeconds);
+
+          // check if target duration is reached (optional: could auto-stop)
+          const targetSec = getTargetDurationSeconds();
+          if (targetSec > 0 && elapsedSeconds >= targetSec) {
+            // auto-stop if target reached
+            stopTimer(true); // silent flag to avoid double stop
+          }
+        }, 200); // update frequently for smoothness (200ms)
+      }
+
+      function stopTimer(isAuto = false) {
+        if (!isRunning && !isAuto) return;
+        if (!isRunning && isAuto) return; // already stopped
+
+        // capture end time
+        endTime = new Date();
+        endTimestampEl.textContent = formatTimestamp(endTime);
+
+        // stop the interval
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+
+        isRunning = false;
+        updateButtonsAndStatus();
+
+        // ensure the main display shows final elapsed time
+        if (startTime) {
+          const diffSec = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+          elapsedSeconds = diffSec;
+          updateMainDisplayFromSeconds(elapsedSeconds);
+        } else {
+          // fallback
+          updateMainDisplayFromSeconds(elapsedSeconds);
+        }
+      }
+
+      function clearAll() {
+        // stop any running timer
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+
+        // reset state
+        isRunning = false;
+        startTime = null;
+        endTime = null;
+        elapsedSeconds = 0;
+
+        // reset UI
+        startTimestampEl.textContent = '—';
+        endTimestampEl.textContent = '—';
+        mainDisplay.textContent = '00:00:00';
+        subDisplay.textContent = 'hours : minutes : seconds';
+        statusIndicator.textContent = '⏸️ IDLE';
+        statusIndicator.classList.remove('running');
+
+        // reset duration to default 30s (0h 0m 30s)
+        hoursInput.value = 0;
+        minutesInput.value = 0;
+        secondsInput.value = 30;
+        enforceDurationLimits(); // ensure valid (30s stays 30s)
+
+        // clear any remaining interval
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+
+        updateButtonsAndStatus();
+      }
+
+      function updateButtonsAndStatus() {
+        if (isRunning) {
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+          statusIndicator.textContent = '▶ RUNNING';
+          statusIndicator.classList.add('running');
+        } else {
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+          statusIndicator.textContent = '⏸️ IDLE';
+          statusIndicator.classList.remove('running');
+        }
+      }
+
+      // ---- event listeners ----
+      startBtn.addEventListener('click', () => {
+        // if already running, ignore
+        if (isRunning) return;
+        // if there is an end time (stopped state), we might want to keep old? 
+        // but we want fresh start. startTimer handles resetting end.
+        startTimer();
+      });
+
+      stopBtn.addEventListener('click', () => {
+        if (!isRunning) return;
+        stopTimer(false);
+      });
+
+      clearBtn.addEventListener('click', () => {
+        clearAll();
+      });
+
+      // when duration inputs change, if running, check if we've already exceeded target?
+      // not needed, but we can enforce limits
+      [hoursInput, minutesInput, secondsInput].forEach(inp => {
+        inp.addEventListener('input', () => {
+          // clamp values live but not harshly (only on blur/change)
+          // for better UX, enforce on change/blur (already set)
+        });
+      });
+
+      // handle page visibility changes to maintain accuracy (but we already use Date diff)
+      // so no extra needed. The interval will keep updating if page visible; if hidden, 
+      // the time will jump forward on next tick but still correct.
+      // optional: update immediately on visibility regain
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && isRunning && startTime) {
+          const now = Date.now();
+          const diffSec = Math.floor((now - startTime.getTime()) / 1000);
+          elapsedSeconds = diffSec;
+          updateMainDisplayFromSeconds(elapsedSeconds);
+        }
+      });
+
+      // initialize display
+      clearAll(); // sets everything to zero, 30s default
+
+      // ensure initial duration constraints (30s min)
+      enforceDurationLimits();
+
+      // prefill start/end placeholders
+      startTimestampEl.textContent = '—';
+      endTimestampEl.textContent = '—';
+
+      // if user manually changes duration while running, we don't auto-stop, but target changes.
+      // no problem.
+    })();
+  </script>
+</body>
+</html>
