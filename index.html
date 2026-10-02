@@ -8,25 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Chrono">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>Chrono</title>
-
-  <!--
-    ═══════════════════════════════════════════════════════════
-    CHRONO — v1.8.1
-    ═══════════════════════════════════════════════════════════
-    FIX: Report popup now reliably appears on BOTH manual stop
-         and auto-stop (target reached).
-
-    Root cause in v1.8.0: `showReport()` was called, but the
-    `startTime` was nulled BEFORE the call in stopTimer(), and
-    the guard `if (!endTime || !startTime) return;` prevented
-    the popup from ever being shown.
-
-    Fix: capture startTime into a local variable before nulling
-    it, and use a dedicated `sessionStart` / `sessionEnd` pair
-    for the report content.
-    ═══════════════════════════════════════════════════════════
-  -->
+  <title>Chrono — Stopwatch</title>
 
   <style>
     * {
@@ -62,7 +44,6 @@
       overflow: hidden;
     }
 
-    /* ---------- top bar ---------- */
     .top-bar {
       display: flex;
       align-items: center;
@@ -143,7 +124,6 @@
     .install-btn.visible { display: inline-flex; }
     .install-btn:hover { background: #d4e6f7; }
 
-    /* ---------- timer ---------- */
     .timer-wrap {
       width: 100%;
       padding: 0.5rem 0 1.2rem;
@@ -172,7 +152,6 @@
     .main-time.paused  { color: #b45309; }
     .main-time.stopped { color: #1e2b3a; }
 
-    /* ---------- target pill ---------- */
     .target-pill {
       display: none;
       align-items: center;
@@ -191,7 +170,6 @@
 
     .target-pill.visible { display: inline-flex; }
 
-    /* ---------- main toggle ---------- */
     .toggle-btn {
       width: 100%;
       padding: 1.15rem 1.25rem;
@@ -227,7 +205,6 @@
 
     .toggle-btn .btn-icon { font-size: 1.3rem; line-height: 1; }
 
-    /* ---------- version ---------- */
     .version-corner {
       position: fixed;
       bottom: 1rem;
@@ -247,7 +224,6 @@
       -webkit-backdrop-filter: blur(6px);
     }
 
-    /* ---------- FAB ---------- */
     .fab {
       position: fixed;
       bottom: 1.75rem;
@@ -348,7 +324,7 @@
       background: white;
       border-radius: 2rem;
       padding: 1.5rem 1.4rem;
-      max-width: 480px;
+      max-width: 520px;
       width: 100%;
       box-shadow: 0 40px 80px -20px rgba(0, 20, 40, 0.45);
       animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -548,7 +524,43 @@
       line-height: 1.5;
     }
 
-    /* ---------- report-specific ---------- */
+    /* ---------- report tabs & history ---------- */
+    .tab-bar {
+      display: flex;
+      gap: 0.3rem;
+      background: #eef2f8;
+      border-radius: 40px;
+      padding: 0.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.6rem 0.5rem;
+      border: none;
+      border-radius: 40px;
+      background: transparent;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #5f6f84;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: #1e2b3a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* current session report */
     .report-header {
       display: flex;
       align-items: center;
@@ -656,7 +668,136 @@
     .report-row .r-value.green { color: #166534; }
     .report-row .r-value.red   { color: #991b1b; }
 
-    /* install toast */
+    /* history list */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 340px;
+      overflow-y: auto;
+      padding-right: 0.2rem;
+    }
+
+    .history-item {
+      background: #f8fafd;
+      border-radius: 1.25rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid #e2eaf3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      transition: background 0.15s;
+    }
+
+    .history-item:hover { background: #eef2f8; }
+
+    .history-item .h-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .history-item .h-duration {
+      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1e2b3a;
+      letter-spacing: -0.01em;
+    }
+
+    .history-item .h-meta {
+      font-size: 0.65rem;
+      color: #8b9aad;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: 'SF Mono', monospace;
+    }
+
+    .history-item .h-result {
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 0.2rem 0.6rem;
+      border-radius: 30px;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .history-item .h-result.ok {
+      background: #e2f3e6;
+      color: #166534;
+      border: 1px solid #b7e0c4;
+    }
+
+    .history-item .h-result.miss {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .history-item .h-result.none {
+      background: #eef2f8;
+      color: #5f6f84;
+      border: 1px solid #d9e2ec;
+    }
+
+    .history-empty {
+      text-align: center;
+      padding: 2rem 0.5rem;
+      color: #8b9aad;
+      font-size: 0.85rem;
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .history-actions button {
+      flex: 1;
+      padding: 0.7rem 0.6rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+
+    .btn-outline {
+      background: white;
+      border: 1px solid #d9e2ec !important;
+      color: #1e2b3a;
+    }
+    .btn-outline:hover { background: #eef2f8; }
+
+    .btn-ghost {
+      background: transparent;
+      color: #dc2626;
+      border: 1px solid #fecaca !important;
+    }
+    .btn-ghost:hover { background: #fef2f2; }
+
+    .backup-hint {
+      font-size: 0.6rem;
+      color: #8b9aad;
+      text-align: center;
+      margin-top: 0.5rem;
+      line-height: 1.4;
+    }
+
     .install-toast {
       position: fixed;
       bottom: 1.5rem;
@@ -699,11 +840,14 @@
       .fab .fab-tip { display: none; }
       .version-corner { bottom: 0.85rem; left: 0.9rem; font-size: 0.58rem; }
       .report-total-time { font-size: 2.2rem; }
+      .history-item { padding: 0.75rem 0.85rem; }
+      .history-item .h-duration { font-size: 0.95rem; }
     }
 
     @media (max-width: 380px) {
       .quick-chip { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
       .report-total-time { font-size: 1.9rem; }
+      .tab-btn { font-size: 0.7rem; padding: 0.5rem 0.3rem; }
     }
   </style>
 </head>
@@ -734,7 +878,7 @@
     </button>
   </div>
 
-  <div class="version-corner" id="versionCorner">v1.8.1</div>
+  <div class="version-corner" id="versionCorner">v2.0.0</div>
 
   <button class="fab delete" id="fab" title="Delete">
     <span class="fab-tip" id="fabTip">Delete</span>
@@ -789,37 +933,67 @@
     </div>
   </div>
 
-  <!-- REPORT MODAL -->
+  <!-- REPORT MODAL (with tabs + history) -->
   <div class="modal-overlay center" id="reportModal">
     <div class="modal-sheet">
-      <div class="report-header">
-        <div class="report-title">📋 Session report</div>
-        <div class="report-status" id="reportStatus">Completed</div>
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabCurrentBtn">📋 Current</button>
+        <button class="tab-btn" id="tabHistoryBtn">📚 History</button>
       </div>
 
-      <div class="report-total">
-        <div class="report-total-label">Total time taken</div>
-        <div class="report-total-time" id="reportTotalTime">00:00:00</div>
-        <div class="report-total-human" id="reportTotalHuman">0 hours · 0 minutes · 0 seconds</div>
+      <!-- CURRENT TAB -->
+      <div class="tab-pane active" id="paneCurrent">
+        <div class="report-header">
+          <div class="report-title">Session report</div>
+          <div class="report-status" id="reportStatus">Completed</div>
+        </div>
+
+        <div class="report-total">
+          <div class="report-total-label">Total time taken</div>
+          <div class="report-total-time" id="reportTotalTime">00:00:00</div>
+          <div class="report-total-human" id="reportTotalHuman">0 hours · 0 minutes · 0 seconds</div>
+        </div>
+
+        <div class="report-details">
+          <div class="report-row">
+            <span class="r-label">Start</span>
+            <span class="r-value" id="reportStart">—</span>
+          </div>
+          <div class="report-row">
+            <span class="r-label">End</span>
+            <span class="r-value" id="reportEnd">—</span>
+          </div>
+          <div class="report-row">
+            <span class="r-label">Target</span>
+            <span class="r-value" id="reportTarget">None</span>
+          </div>
+          <div class="report-row">
+            <span class="r-label">Result</span>
+            <span class="r-value" id="reportResult">—</span>
+          </div>
+        </div>
       </div>
 
-      <div class="report-details">
-        <div class="report-row">
-          <span class="r-label">Start</span>
-          <span class="r-value" id="reportStart">—</span>
+      <!-- HISTORY TAB -->
+      <div class="tab-pane" id="paneHistory">
+        <div class="report-header">
+          <div class="report-title">📚 Saved history</div>
+          <div class="report-status" style="background:#eef2f8; color:#5f6f84; border-color:#d9e2ec;" id="historyCountBadge">0</div>
         </div>
-        <div class="report-row">
-          <span class="r-label">End</span>
-          <span class="r-value" id="reportEnd">—</span>
+
+        <div class="history-list" id="historyList">
+          <div class="history-empty">No history yet. Stop a session to save it.</div>
         </div>
-        <div class="report-row">
-          <span class="r-label">Target</span>
-          <span class="r-value" id="reportTarget">None</span>
+
+        <div class="history-actions">
+          <button class="btn-outline" id="downloadCsvBtn">⬇️ CSV</button>
+          <button class="btn-outline" id="downloadJsonBtn">💾 Backup</button>
+          <button class="btn-ghost" id="clearHistoryBtn">🗑 Clear</button>
         </div>
-        <div class="report-row">
-          <span class="r-label">Result</span>
-          <span class="r-value" id="reportResult">—</span>
-        </div>
+        <div class="backup-hint">CSV & JSON include all history — restore by re-importing backup.</div>
+
+        <!-- hidden file input for restore -->
+        <input type="file" id="restoreFileInput" accept=".json" style="display:none;">
       </div>
 
       <div class="modal-actions">
@@ -842,7 +1016,7 @@
         </svg>
       </div>
       <h3>Clear all data?</h3>
-      <p>This will reset the timer, clear the report, remove the target, and wipe saved state from this device.</p>
+      <p>This will reset the timer, clear history, remove the target, and wipe saved state from this device.</p>
       <div class="modal-actions">
         <button class="modal-clear" id="cancelClear">Cancel</button>
         <button class="modal-danger" id="confirmClear">Clear</button>
@@ -856,8 +1030,9 @@
   </div>
 
   <script>
-    const APP_VERSION = '1.8.1';
+    const APP_VERSION = '2.0.0';
     const STORAGE_KEY = 'chronoPro.state';
+    const HISTORY_KEY = 'chronoPro.history';
 
     /* ---------- inline PWA manifest ---------- */
     (function injectManifest() {
@@ -961,18 +1136,17 @@
     })();
 
     /* ═══════════════════════════════════════════════════════════
-       TIMER
+       TIMER + HISTORY
        ═══════════════════════════════════════════════════════════ */
     (function timerApp() {
       let mode = 'idle';
-      let startTime = null;         // current run's start (null while paused)
+      let startTime = null;
       let endTime = null;
       let elapsedSeconds = 0;
       let accumulatedMs = 0;
       let timerInterval = null;
       let targetDurationSec = 0;
 
-      // session report data (captured at stop time, before we null startTime)
       let sessionStart = null;
       let sessionEnd = null;
 
@@ -1001,6 +1175,18 @@
       const reportResult = document.getElementById('reportResult');
       const reportCloseBtn = document.getElementById('reportClose');
       const reportRestartBtn = document.getElementById('reportRestart');
+
+      const tabCurrentBtn = document.getElementById('tabCurrentBtn');
+      const tabHistoryBtn = document.getElementById('tabHistoryBtn');
+      const paneCurrent = document.getElementById('paneCurrent');
+      const paneHistory = document.getElementById('paneHistory');
+
+      const historyList = document.getElementById('historyList');
+      const historyCountBadge = document.getElementById('historyCountBadge');
+      const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+      const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+      const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+      const restoreFileInput = document.getElementById('restoreFileInput');
 
       const deleteModal = document.getElementById('deleteModal');
       const cancelClearBtn = document.getElementById('cancelClear');
@@ -1041,6 +1227,139 @@
         } else {
           fabIcon.style.fill = 'none';
           fabIcon.style.stroke = 'currentColor';
+        }
+      }
+
+      /* ---------- HISTORY ---------- */
+      function loadHistory() {
+        try {
+          const raw = localStorage.getItem(HISTORY_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) { return []; }
+      }
+
+      function saveHistory(history) {
+        try {
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        } catch (e) {}
+      }
+
+      function addHistoryEntry(entry) {
+        const history = loadHistory();
+        history.unshift(entry); // newest first
+        // keep max 500 entries to avoid bloat
+        if (history.length > 500) history.length = 500;
+        saveHistory(history);
+        renderHistory();
+      }
+
+      function renderHistory() {
+        const history = loadHistory();
+        historyCountBadge.textContent = history.length;
+
+        if (history.length === 0) {
+          historyList.innerHTML = '<div class="history-empty">No history yet. Stop a session to save it.</div>';
+          return;
+        }
+
+        historyList.innerHTML = history.map((item, idx) => {
+          const durationStr = item.duration || '00:00:00';
+          const startStr = item.startFormatted || '—';
+          let resultClass = 'none';
+          let resultText = 'Stopped';
+          if (item.result === 'reached') {
+            resultClass = 'ok';
+            resultText = '✅';
+          } else if (item.result === 'missed') {
+            resultClass = 'miss';
+            resultText = '⚠️';
+          } else {
+            resultText = '—';
+          }
+          return `
+            <div class="history-item" data-index="${idx}">
+              <div class="h-left">
+                <span class="h-duration">${durationStr}</span>
+                <span class="h-meta">${startStr}</span>
+              </div>
+              <span class="h-result ${resultClass}">${resultText}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function downloadCSV() {
+        const history = loadHistory();
+        if (history.length === 0) {
+          alert('No history to download.');
+          return;
+        }
+        const headers = ['Start (ISO)', 'End (ISO)', 'Start (Formatted)', 'End (Formatted)', 'Duration (HH:MM:SS)', 'Duration (seconds)', 'Target (seconds)', 'Result', 'Session ID'];
+        const rows = history.map(item => [
+          item.startISO || '',
+          item.endISO || '',
+          item.startFormatted || '',
+          item.endFormatted || '',
+          item.duration || '',
+          item.durationSeconds ?? '',
+          item.targetSeconds ?? 0,
+          item.result || 'stopped',
+          item.id || ''
+        ]);
+        const csvContent = [headers.join(','), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chrono_history_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function downloadJSON() {
+        const history = loadHistory();
+        if (history.length === 0) {
+          alert('No history to back up.');
+          return;
+        }
+        const backup = {
+          app: 'Chrono',
+          version: APP_VERSION,
+          exportedAt: new Date().toISOString(),
+          history: history
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chrono_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function restoreFromBackup(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (data && Array.isArray(data.history)) {
+              saveHistory(data.history);
+              renderHistory();
+              alert(`✅ Restored ${data.history.length} history entries.`);
+            } else {
+              alert('❌ Invalid backup file: missing history array.');
+            }
+          } catch (err) {
+            alert('❌ Failed to parse backup file.');
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function clearHistory() {
+        if (confirm('Clear all saved history? This cannot be undone.')) {
+          saveHistory([]);
+          renderHistory();
         }
       }
 
@@ -1201,7 +1520,6 @@
 
       /* ---------- report popup ---------- */
       function showReport() {
-        // Guard against missing session data
         if (!sessionStart || !sessionEnd) {
           console.warn('[report] missing session data', { sessionStart, sessionEnd });
           return;
@@ -1213,15 +1531,18 @@
         reportStart.textContent = formatTimestamp(sessionStart);
         reportEnd.textContent = formatTimestamp(sessionEnd);
 
+        let resultType = 'stopped';
         if (targetDurationSec > 0) {
           reportTarget.textContent = targetLabel(targetDurationSec);
           if (totalSec >= targetDurationSec) {
+            resultType = 'reached';
             reportResult.textContent = '✅ Target reached';
             reportResult.classList.remove('red');
             reportResult.classList.add('green');
             reportStatus.textContent = 'Completed';
             reportStatus.classList.remove('miss');
           } else {
+            resultType = 'missed';
             const shortBy = targetDurationSec - totalSec;
             reportResult.textContent = `⚠️ Short by ${targetLabel(shortBy)}`;
             reportResult.classList.remove('green');
@@ -1237,7 +1558,24 @@
           reportStatus.classList.remove('miss');
         }
 
-        // Small delay so the timer UI updates first, then popup slides in
+        // Save to history
+        const entry = {
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          startISO: sessionStart.toISOString(),
+          endISO: sessionEnd.toISOString(),
+          startFormatted: formatTimestamp(sessionStart),
+          endFormatted: formatTimestamp(sessionEnd),
+          duration: secondsToHMS(totalSec),
+          durationSeconds: totalSec,
+          targetSeconds: targetDurationSec,
+          result: resultType,
+          savedAt: new Date().toISOString()
+        };
+        addHistoryEntry(entry);
+
+        // Switch to current tab on open
+        switchTab('current');
+
         requestAnimationFrame(() => {
           reportModal.classList.add('show');
         });
@@ -1245,13 +1583,28 @@
 
       function closeReport() { reportModal.classList.remove('show'); }
 
+      function switchTab(tab) {
+        if (tab === 'current') {
+          tabCurrentBtn.classList.add('active');
+          tabHistoryBtn.classList.remove('active');
+          paneCurrent.classList.add('active');
+          paneHistory.classList.remove('active');
+        } else {
+          tabHistoryBtn.classList.add('active');
+          tabCurrentBtn.classList.remove('active');
+          paneHistory.classList.add('active');
+          paneCurrent.classList.remove('active');
+          renderHistory();
+        }
+      }
+
       /* ---------- core actions ---------- */
       function startFresh() {
         clearInterval(timerInterval);
         accumulatedMs = 0;
         elapsedSeconds = 0;
         startTime = new Date();
-        sessionStart = startTime;   // capture for later report
+        sessionStart = startTime;
         sessionEnd = null;
         endTime = null;
         mode = 'running';
@@ -1290,7 +1643,6 @@
       }
 
       function stopTimer() {
-        // Capture the run's elapsed
         if (mode === 'running' && startTime) {
           accumulatedMs += Date.now() - startTime.getTime();
           elapsedSeconds = Math.floor(accumulatedMs / 1000);
@@ -1301,9 +1653,8 @@
         clearInterval(timerInterval);
         timerInterval = null;
 
-        // Capture session end AND ensure session start exists
         sessionEnd = new Date();
-        if (!sessionStart) sessionStart = sessionEnd;   // fallback safety
+        if (!sessionStart) sessionStart = sessionEnd;
 
         endTime = sessionEnd;
         mode = 'stopped';
@@ -1314,7 +1665,6 @@
         updateFabUI();
         saveState();
 
-        // Show the report popup — works for manual & auto stop
         showReport();
       }
 
@@ -1343,7 +1693,7 @@
         else deleteModal.classList.add('show');
       });
 
-      /* ---------- report modal buttons ---------- */
+      /* ---------- report modal buttons + tabs ---------- */
       reportCloseBtn.addEventListener('click', closeReport);
       reportRestartBtn.addEventListener('click', () => {
         closeReport();
@@ -1352,6 +1702,9 @@
       reportModal.addEventListener('click', (e) => {
         if (e.target === reportModal) closeReport();
       });
+
+      tabCurrentBtn.addEventListener('click', () => switchTab('current'));
+      tabHistoryBtn.addEventListener('click', () => switchTab('history'));
 
       /* ---------- target modal ---------- */
       function openTargetModal() { targetModal.classList.add('show'); }
@@ -1455,7 +1808,46 @@
         updateTargetUI();
         updateToggleUI();
         updateFabUI();
+        renderHistory();
         closeDeleteModal();
+      });
+
+      /* ---------- download / backup / restore / clear history ---------- */
+      downloadCsvBtn.addEventListener('click', downloadCSV);
+      downloadJsonBtn.addEventListener('click', downloadJSON);
+      clearHistoryBtn.addEventListener('click', clearHistory);
+
+      /* hidden restore trigger: double-tap on history count? We'll add a long-press on download button */
+      // Simple: long-press on the backup button to restore (press and hold 800ms)
+      let backupPressTimer = null;
+      downloadJsonBtn.addEventListener('mousedown', () => {
+        backupPressTimer = setTimeout(() => {
+          restoreFileInput.click();
+        }, 800);
+      });
+      downloadJsonBtn.addEventListener('mouseup', () => {
+        clearTimeout(backupPressTimer);
+      });
+      downloadJsonBtn.addEventListener('mouseleave', () => {
+        clearTimeout(backupPressTimer);
+      });
+      // Touch support
+      downloadJsonBtn.addEventListener('touchstart', (e) => {
+        backupPressTimer = setTimeout(() => {
+          restoreFileInput.click();
+        }, 800);
+      }, { passive: true });
+      downloadJsonBtn.addEventListener('touchend', () => {
+        clearTimeout(backupPressTimer);
+      });
+      downloadJsonBtn.addEventListener('touchcancel', () => {
+        clearTimeout(backupPressTimer);
+      });
+
+      restoreFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) restoreFromBackup(file);
+        restoreFileInput.value = '';
       });
 
       /* ---------- visibility ---------- */
@@ -1470,6 +1862,7 @@
 
       /* ---------- init ---------- */
       function init() {
+        renderHistory();
         const loaded = loadState();
         if (loaded) {
           if (mode === 'running' && startTime) {
