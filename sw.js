@@ -1,4 +1,4 @@
-const CACHE = 'chrono-v2.0.0';
+const CACHE = 'mystopwatch-v2.0.0';
 const ASSETS = [
   './',
   './index.html',
