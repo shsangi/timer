@@ -10,6 +10,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>Chrono — Stopwatch</title>
 
+  <!-- Link to your existing manifest.json in the repo -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="logo.png">
+
   <style>
     * {
       margin: 0;
@@ -943,7 +947,7 @@
   </style>
 </head>
 <body>
-  <!-- INSTALL BANNER (top, for new users) -->
+  <!-- INSTALL BANNER -->
   <div class="install-banner" id="installBanner">
     <div class="ib-text">
       <span class="ib-icon">📲</span>
@@ -1152,35 +1156,14 @@
     const HISTORY_KEY = 'chronoPro.history';
     const INSTALL_DISMISS_KEY = 'chronoPro.installDismissed';
 
-    /* ---------- inline PWA manifest ---------- */
-    (function injectManifest() {
-      const manifest = {
-        name: "Chrono", short_name: "Chrono",
-        description: "Precision timer & stopwatch",
-        start_url: ".", scope: ".",
-        display: "standalone", orientation: "portrait",
-        background_color: "#f5f7fc", theme_color: "#f5f7fc",
-        version: APP_VERSION,
-        icons: [
-          { src: "logo.png", sizes: "192x192", type: "image/png", purpose: "any" },
-          { src: "logo.png", sizes: "512x512", type: "image/png", purpose: "any" },
-          { src: "logo.png", sizes: "any", type: "image/png", purpose: "maskable" }
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = url;
-      document.head.appendChild(link);
-    })();
-
-    /* ---------- inline service worker ---------- */
+    /* ---------- SERVICE WORKER ---------- */
     (function registerServiceWorker() {
       if (!('serviceWorker' in navigator)) return;
+      // GitHub Pages subpath safe scope
+      const scope = window.location.pathname.includes('/timer/') ? '/timer/' : './';
       const swCode = `
         const CACHE = 'chrono-${APP_VERSION}';
-        const ASSETS = ['./', 'logo.png'];
+        const ASSETS = ['${scope}', '${scope}logo.png', '${scope}manifest.json'];
         self.addEventListener('install', (event) => {
           event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS).catch(() => {})));
           self.skipWaiting();
@@ -1204,11 +1187,11 @@
       `;
       const blob = new Blob([swCode], { type: 'application/javascript' });
       const swUrl = URL.createObjectURL(blob);
-      navigator.serviceWorker.register(swUrl, { scope: './' })
+      navigator.serviceWorker.register(swUrl, { scope: scope })
         .catch((err) => console.warn('[PWA] SW failed:', err));
     })();
 
-    /* ---------- install prompt + top banner ---------- */
+    /* ---------- INSTALL PROMPT + BANNER ---------- */
     (function installPrompt() {
       let deferredPrompt = null;
       const installBtn = document.getElementById('installBtn');
@@ -1221,16 +1204,13 @@
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                           window.navigator.standalone === true;
 
-      // Show top banner for new users (not dismissed + not installed)
       function shouldShowBanner() {
         if (isStandalone) return false;
-        try {
-          return localStorage.getItem(INSTALL_DISMISS_KEY) !== 'true';
-        } catch (e) { return true; }
+        try { return localStorage.getItem(INSTALL_DISMISS_KEY) !== 'true'; }
+        catch (e) { return true; }
       }
 
       if (shouldShowBanner()) {
-        // Show after a short delay
         setTimeout(() => {
           installBanner.classList.add('show');
           document.body.classList.add('has-banner');
@@ -1247,7 +1227,6 @@
         e.preventDefault();
         deferredPrompt = e;
         installBtn.classList.add('visible');
-        // If banner is showing, keep it; otherwise show toast after 3s
         if (!installBanner.classList.contains('show')) {
           setTimeout(() => {
             if (deferredPrompt && !isStandalone) installToast.classList.add('show');
@@ -1302,7 +1281,6 @@
       let sessionStart = null;
       let sessionEnd = null;
 
-      /* DOM */
       const mainDisplay = document.getElementById('mainDisplay');
       const toggleBtn = document.getElementById('toggleBtn');
       const toggleIcon = document.getElementById('toggleIcon');
@@ -1358,14 +1336,11 @@
       const secondsInput = document.getElementById('secondsInput');
       const quickChips = document.querySelectorAll('.quick-chip');
 
-      /* SVG icons */
       const ICON_PAUSE = `
         <rect x="7" y="5" width="3.5" height="14" rx="1"></rect>
         <rect x="13.5" y="5" width="3.5" height="14" rx="1"></rect>
       `;
-      const ICON_PLAY = `
-        <polygon points="7 4 20 12 7 20 7 4"></polygon>
-      `;
+      const ICON_PLAY = `<polygon points="7 4 20 12 7 20 7 4"></polygon>`;
       const ICON_RESET = `
         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
         <path d="M3 3v5h5"></path>
@@ -1396,9 +1371,7 @@
       }
 
       function saveHistory(history) {
-        try {
-          localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-        } catch (e) {}
+        try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch (e) {}
       }
 
       function addHistoryEntry(entry) {
@@ -1492,39 +1465,29 @@
         }
       }
 
-      /* ---------- CACHE CLEAR (wipe everything) ---------- */
       function clearSiteCache() {
         try {
-          // Clear localStorage keys
           localStorage.removeItem(STORAGE_KEY);
           localStorage.removeItem(HISTORY_KEY);
           localStorage.removeItem(INSTALL_DISMISS_KEY);
-          // Clear sessionStorage
           sessionStorage.clear();
-          // Clear caches (service worker cache)
           if ('caches' in window) {
-            caches.keys().then(names => {
-              names.forEach(name => caches.delete(name));
-            });
+            caches.keys().then(names => { names.forEach(name => caches.delete(name)); });
           }
-          // Unregister service workers
           if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-              registrations.forEach(reg => reg.unregister());
+            navigator.serviceWorker.getRegistrations().then(regs => {
+              regs.forEach(reg => reg.unregister());
             });
           }
-          // Reset UI
           resetCurrentSession();
           renderHistory();
           closeCacheModal();
-          // Reload after a short delay to fully reset
           setTimeout(() => { window.location.reload(); }, 800);
         } catch (e) {
           alert('Failed to clear cache: ' + e.message);
         }
       }
 
-      /* ---------- storage ---------- */
       function saveState() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -1561,7 +1524,6 @@
         } catch (e) { return false; }
       }
 
-      /* ---------- formatting ---------- */
       function formatTimestamp(date) {
         if (!date) return '—';
         const y = date.getFullYear();
@@ -1601,7 +1563,6 @@
         return parts.join(' ') || 'None';
       }
 
-      /* ---------- UI updaters ---------- */
       function updateMainDisplay() {
         mainDisplay.textContent = secondsToHMS(elapsedSeconds);
         mainDisplay.classList.remove('running', 'paused', 'stopped');
@@ -1660,7 +1621,6 @@
         });
       }
 
-      /* ---------- report popup ---------- */
       function showReport() {
         if (!sessionStart || !sessionEnd) return;
         const totalSec = elapsedSeconds;
@@ -1730,7 +1690,6 @@
         }
       }
 
-      /* ---------- core actions ---------- */
       function startFresh() {
         clearInterval(timerInterval);
         accumulatedMs = 0;
@@ -1805,7 +1764,6 @@
         }
       }
 
-      /* ---------- RESET CURRENT SESSION (keeps history) ---------- */
       function resetCurrentSession() {
         clearInterval(timerInterval);
         timerInterval = null;
@@ -1827,31 +1785,26 @@
 
       function openResetModal() { resetModal.classList.add('show'); }
       function closeResetModal() { resetModal.classList.remove('show'); }
-
       function openCacheModal() { cacheModal.classList.add('show'); }
       function closeCacheModal() { cacheModal.classList.remove('show'); }
 
-      /* ---------- toggle button ---------- */
       toggleBtn.addEventListener('click', () => {
         if (mode === 'idle' || mode === 'stopped') startFresh();
         else stopTimer();
       });
 
-      /* ---------- FAB ---------- */
       fab.addEventListener('click', () => {
         if (mode === 'running') pauseTimer();
         else if (mode === 'paused') resumeTimer();
         else openResetModal();
       });
 
-      /* ---------- report modal buttons + tabs ---------- */
       reportCloseBtn.addEventListener('click', closeReport);
       reportRestartBtn.addEventListener('click', () => { closeReport(); startFresh(); });
       reportModal.addEventListener('click', (e) => { if (e.target === reportModal) closeReport(); });
       tabCurrentBtn.addEventListener('click', () => switchTab('current'));
       tabHistoryBtn.addEventListener('click', () => switchTab('history'));
 
-      /* ---------- target modal ---------- */
       function openTargetModal() { targetModal.classList.add('show'); }
       function closeTargetModal() { targetModal.classList.remove('show'); }
       filterBtn.addEventListener('click', openTargetModal);
@@ -1913,12 +1866,10 @@
         closeTargetModal();
       });
 
-      /* ---------- reset modal ---------- */
       cancelResetBtn.addEventListener('click', closeResetModal);
       resetModal.addEventListener('click', (e) => { if (e.target === resetModal) closeResetModal(); });
       confirmResetBtn.addEventListener('click', resetCurrentSession);
 
-      /* ---------- cache modal ---------- */
       cancelCacheBtn.addEventListener('click', closeCacheModal);
       cacheModal.addEventListener('click', (e) => { if (e.target === cacheModal) closeCacheModal(); });
       confirmCacheBtn.addEventListener('click', clearSiteCache);
@@ -1932,13 +1883,11 @@
         }
       });
 
-      /* ---------- download / backup / restore / clear history ---------- */
       downloadCsvBtn.addEventListener('click', downloadCSV);
       downloadJsonBtn.addEventListener('click', downloadJSON);
       clearHistoryBtn.addEventListener('click', clearHistory);
       clearCacheBtn.addEventListener('click', openCacheModal);
 
-      // Long-press on backup button to restore
       let backupPressTimer = null;
       downloadJsonBtn.addEventListener('mousedown', () => { backupPressTimer = setTimeout(() => restoreFileInput.click(), 800); });
       downloadJsonBtn.addEventListener('mouseup', () => clearTimeout(backupPressTimer));
@@ -1953,7 +1902,6 @@
         restoreFileInput.value = '';
       });
 
-      /* ---------- visibility ---------- */
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && mode === 'running' && startTime) {
           elapsedSeconds = Math.floor((accumulatedMs + (Date.now() - startTime.getTime())) / 1000);
@@ -1963,7 +1911,6 @@
 
       window.addEventListener('beforeunload', saveState);
 
-      /* ---------- init ---------- */
       function init() {
         renderHistory();
         const loaded = loadState();
