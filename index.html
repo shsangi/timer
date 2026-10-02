@@ -6,11 +6,10 @@
   <meta name="theme-color" content="#f5f7fc">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Chrono">
+  <meta name="apple-mobile-web-app-title" content="MyStopwatch">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>Chrono — Stopwatch</title>
+  <title>MyStopwatch</title>
 
-  <!-- Link to your existing manifest.json in the repo -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="logo.png">
 
@@ -951,7 +950,7 @@
   <div class="install-banner" id="installBanner">
     <div class="ib-text">
       <span class="ib-icon">📲</span>
-      <span class="ib-msg">Install Chrono as an app for faster access!</span>
+      <span class="ib-msg">Install MyStopwatch as an app for faster access!</span>
     </div>
     <button id="bannerInstallBtn">Install</button>
     <button class="ib-close" id="bannerCloseBtn" title="Dismiss">✕</button>
@@ -983,7 +982,7 @@
     </button>
   </div>
 
-  <div class="version-corner" id="versionCorner">v2.0.0</div>
+  <div class="version-corner" id="versionCorner">MyStopwatch v2.0.0</div>
 
   <!-- FAB: Reset current session -->
   <button class="fab reset" id="fab" title="Reset current session">
@@ -1146,49 +1145,24 @@
   </div>
 
   <div class="install-toast" id="installToast">
-    <span>📲 Install Chrono</span>
+    <span>📲 Install MyStopwatch</span>
     <button id="installToastBtn">Install</button>
   </div>
 
   <script>
     const APP_VERSION = '2.0.0';
-    const STORAGE_KEY = 'chronoPro.state';
-    const HISTORY_KEY = 'chronoPro.history';
-    const INSTALL_DISMISS_KEY = 'chronoPro.installDismissed';
+    const STORAGE_KEY = 'mystopwatch.state';
+    const HISTORY_KEY = 'mystopwatch.history';
+    const INSTALL_DISMISS_KEY = 'mystopwatch.installDismissed';
 
     /* ---------- SERVICE WORKER ---------- */
     (function registerServiceWorker() {
       if (!('serviceWorker' in navigator)) return;
-      // GitHub Pages subpath safe scope
-      const scope = window.location.pathname.includes('/timer/') ? '/timer/' : './';
-      const swCode = `
-        const CACHE = 'chrono-${APP_VERSION}';
-        const ASSETS = ['${scope}', '${scope}logo.png', '${scope}manifest.json'];
-        self.addEventListener('install', (event) => {
-          event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS).catch(() => {})));
-          self.skipWaiting();
-        });
-        self.addEventListener('activate', (event) => { event.waitUntil(self.clients.claim()); });
-        self.addEventListener('fetch', (event) => {
-          if (event.request.method !== 'GET') return;
-          event.respondWith(
-            caches.match(event.request).then((cached) => {
-              const network = fetch(event.request).then((response) => {
-                if (response && response.status === 200 && response.type === 'basic') {
-                  const clone = response.clone();
-                  caches.open(CACHE).then((cache) => cache.put(event.request, clone));
-                }
-                return response;
-              }).catch(() => cached);
-              return cached || network;
-            })
-          );
-        });
-      `;
-      const blob = new Blob([swCode], { type: 'application/javascript' });
-      const swUrl = URL.createObjectURL(blob);
-      navigator.serviceWorker.register(swUrl, { scope: scope })
-        .catch((err) => console.warn('[PWA] SW failed:', err));
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then((reg) => console.log('[PWA] SW registered:', reg.scope))
+          .catch((err) => console.warn('[PWA] SW failed:', err));
+      });
     })();
 
     /* ---------- INSTALL PROMPT + BANNER ---------- */
@@ -1423,7 +1397,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `chrono_history_${new Date().toISOString().slice(0,10)}.csv`;
+        a.download = `mystopwatch_history_${new Date().toISOString().slice(0,10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -1431,12 +1405,12 @@
       function downloadJSON() {
         const history = loadHistory();
         if (history.length === 0) { alert('No history to back up.'); return; }
-        const backup = { app: 'Chrono', version: APP_VERSION, exportedAt: new Date().toISOString(), history: history };
+        const backup = { app: 'MyStopwatch', version: APP_VERSION, exportedAt: new Date().toISOString(), history: history };
         const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `chrono_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.download = `mystopwatch_backup_${new Date().toISOString().slice(0,10)}.json`;
         a.click();
         URL.revokeObjectURL(url);
       }
