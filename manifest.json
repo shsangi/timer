@@ -1,6 +1,6 @@
 {
-  "name": "Chrono",
-  "short_name": "Chrono",
+  "name": "MyStopwatch",
+  "short_name": "MyStopwatch",
   "description": "Precision timer & stopwatch",
   "start_url": ".",
   "scope": ".",
