@@ -29,6 +29,86 @@
       padding-bottom: 7rem;
     }
 
+    /* ---------- INSTALL BANNER ---------- */
+    .install-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #1e2b3a;
+      color: white;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      z-index: 1300;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+      padding-top: max(0.75rem, env(safe-area-inset-top));
+    }
+
+    .install-banner.show { transform: translateY(0); }
+
+    .install-banner .ib-text {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .install-banner .ib-icon {
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .install-banner .ib-msg {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .install-banner button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .install-banner button:hover { background: #2563eb; }
+
+    .install-banner .ib-close {
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      padding: 0.25rem;
+      font-size: 1.1rem;
+      line-height: 1;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .install-banner .ib-close:hover { background: rgba(255,255,255,0.1); color: white; }
+
+    body.has-banner {
+      padding-top: 5.5rem;
+    }
+
     .app-card {
       max-width: 640px;
       width: 100%;
@@ -789,6 +869,13 @@
     }
     .btn-ghost:hover { background: #fef2f2; }
 
+    .btn-cache {
+      background: white;
+      border: 1px solid #fcd34d !important;
+      color: #92400e;
+    }
+    .btn-cache:hover { background: #fffbeb; }
+
     .backup-hint {
       font-size: 0.6rem;
       color: #8b9aad;
@@ -841,16 +928,31 @@
       .report-total-time { font-size: 2.2rem; }
       .history-item { padding: 0.75rem 0.85rem; }
       .history-item .h-duration { font-size: 0.95rem; }
+      .history-actions button { font-size: 0.65rem; padding: 0.6rem 0.4rem; }
+      .install-banner { font-size: 0.75rem; padding: 0.6rem 0.75rem; }
+      .install-banner button { padding: 0.4rem 0.8rem; font-size: 0.7rem; }
+      body.has-banner { padding-top: 4.8rem; }
     }
 
     @media (max-width: 380px) {
       .quick-chip { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
       .report-total-time { font-size: 1.9rem; }
       .tab-btn { font-size: 0.7rem; padding: 0.5rem 0.3rem; }
+      .history-actions button { font-size: 0.6rem; padding: 0.55rem 0.3rem; }
     }
   </style>
 </head>
 <body>
+  <!-- INSTALL BANNER (top, for new users) -->
+  <div class="install-banner" id="installBanner">
+    <div class="ib-text">
+      <span class="ib-icon">📲</span>
+      <span class="ib-msg">Install Chrono as an app for faster access!</span>
+    </div>
+    <button id="bannerInstallBtn">Install</button>
+    <button class="ib-close" id="bannerCloseBtn" title="Dismiss">✕</button>
+  </div>
+
   <div class="app-card">
     <div class="top-bar">
       <button class="filter-btn" id="filterBtn" title="Set target duration">
@@ -879,7 +981,7 @@
 
   <div class="version-corner" id="versionCorner">v2.0.0</div>
 
-  <!-- FAB: now a RESET button (clears current session but keeps history) -->
+  <!-- FAB: Reset current session -->
   <button class="fab reset" id="fab" title="Reset current session">
     <span class="fab-tip" id="fabTip">Reset</span>
     <svg id="fabIcon" viewBox="0 0 24 24">
@@ -930,7 +1032,7 @@
     </div>
   </div>
 
-  <!-- REPORT MODAL (with tabs + history) -->
+  <!-- REPORT MODAL (with tabs + history + cache clear) -->
   <div class="modal-overlay center" id="reportModal">
     <div class="modal-sheet">
       <div class="tab-bar">
@@ -987,6 +1089,9 @@
           <button class="btn-outline" id="downloadJsonBtn">💾 Backup</button>
           <button class="btn-ghost" id="clearHistoryBtn">🗑 Clear</button>
         </div>
+        <div class="history-actions" style="margin-top: 0.4rem;">
+          <button class="btn-cache" id="clearCacheBtn">🧹 Clear site cache</button>
+        </div>
         <div class="backup-hint">CSV & JSON include all history — restore by re-importing backup.</div>
 
         <input type="file" id="restoreFileInput" accept=".json" style="display:none;">
@@ -999,7 +1104,7 @@
     </div>
   </div>
 
-  <!-- RESET CONFIRMATION MODAL (replaces delete modal) -->
+  <!-- RESET CONFIRMATION MODAL -->
   <div class="modal-overlay center" id="resetModal">
     <div class="modal-sheet modal-center">
       <div class="modal-icon">
@@ -1017,6 +1122,25 @@
     </div>
   </div>
 
+  <!-- CACHE CLEAR CONFIRMATION MODAL -->
+  <div class="modal-overlay center" id="cacheModal">
+    <div class="modal-sheet modal-center">
+      <div class="modal-icon" style="background: #fef3c7; color: #92400e;">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 6h18"></path>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+      </div>
+      <h3>Clear site cache?</h3>
+      <p>This will remove <strong>all saved history</strong>, timer state, and cached files. The app will reset completely. This cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="modal-clear" id="cancelCache">Cancel</button>
+        <button class="modal-danger" id="confirmCache">Clear everything</button>
+      </div>
+    </div>
+  </div>
+
   <div class="install-toast" id="installToast">
     <span>📲 Install Chrono</span>
     <button id="installToastBtn">Install</button>
@@ -1026,8 +1150,9 @@
     const APP_VERSION = '2.0.0';
     const STORAGE_KEY = 'chronoPro.state';
     const HISTORY_KEY = 'chronoPro.history';
+    const INSTALL_DISMISS_KEY = 'chronoPro.installDismissed';
 
-    /* ---------- inline PWA manifest (with your logo) ---------- */
+    /* ---------- inline PWA manifest ---------- */
     (function injectManifest() {
       const manifest = {
         name: "Chrono", short_name: "Chrono",
@@ -1083,24 +1208,51 @@
         .catch((err) => console.warn('[PWA] SW failed:', err));
     })();
 
-    /* ---------- install prompt ---------- */
+    /* ---------- install prompt + top banner ---------- */
     (function installPrompt() {
       let deferredPrompt = null;
       const installBtn = document.getElementById('installBtn');
       const installToast = document.getElementById('installToast');
       const installToastBtn = document.getElementById('installToastBtn');
+      const installBanner = document.getElementById('installBanner');
+      const bannerInstallBtn = document.getElementById('bannerInstallBtn');
+      const bannerCloseBtn = document.getElementById('bannerCloseBtn');
 
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                           window.navigator.standalone === true;
-      if (isStandalone) return;
+
+      // Show top banner for new users (not dismissed + not installed)
+      function shouldShowBanner() {
+        if (isStandalone) return false;
+        try {
+          return localStorage.getItem(INSTALL_DISMISS_KEY) !== 'true';
+        } catch (e) { return true; }
+      }
+
+      if (shouldShowBanner()) {
+        // Show after a short delay
+        setTimeout(() => {
+          installBanner.classList.add('show');
+          document.body.classList.add('has-banner');
+        }, 1500);
+      }
+
+      bannerCloseBtn.addEventListener('click', () => {
+        installBanner.classList.remove('show');
+        document.body.classList.remove('has-banner');
+        try { localStorage.setItem(INSTALL_DISMISS_KEY, 'true'); } catch (e) {}
+      });
 
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
         installBtn.classList.add('visible');
-        setTimeout(() => {
-          if (deferredPrompt && !isStandalone) installToast.classList.add('show');
-        }, 3000);
+        // If banner is showing, keep it; otherwise show toast after 3s
+        if (!installBanner.classList.contains('show')) {
+          setTimeout(() => {
+            if (deferredPrompt && !isStandalone) installToast.classList.add('show');
+          }, 3000);
+        }
       });
 
       const triggerInstall = async () => {
@@ -1117,13 +1269,20 @@
         deferredPrompt = null;
         installBtn.classList.remove('visible');
         installToast.classList.remove('show');
+        installBanner.classList.remove('show');
+        document.body.classList.remove('has-banner');
       };
 
       installBtn.addEventListener('click', triggerInstall);
       installToastBtn.addEventListener('click', triggerInstall);
+      bannerInstallBtn.addEventListener('click', triggerInstall);
+
       window.addEventListener('appinstalled', () => {
         installBtn.classList.remove('visible');
         installToast.classList.remove('show');
+        installBanner.classList.remove('show');
+        document.body.classList.remove('has-banner');
+        try { localStorage.setItem(INSTALL_DISMISS_KEY, 'true'); } catch (e) {}
         deferredPrompt = null;
       });
     })();
@@ -1179,11 +1338,16 @@
       const downloadCsvBtn = document.getElementById('downloadCsvBtn');
       const downloadJsonBtn = document.getElementById('downloadJsonBtn');
       const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+      const clearCacheBtn = document.getElementById('clearCacheBtn');
       const restoreFileInput = document.getElementById('restoreFileInput');
 
       const resetModal = document.getElementById('resetModal');
       const cancelResetBtn = document.getElementById('cancelReset');
       const confirmResetBtn = document.getElementById('confirmReset');
+
+      const cacheModal = document.getElementById('cacheModal');
+      const cancelCacheBtn = document.getElementById('cancelCache');
+      const confirmCacheBtn = document.getElementById('confirmCache');
 
       const fab = document.getElementById('fab');
       const fabIcon = document.getElementById('fabIcon');
@@ -1195,13 +1359,6 @@
       const quickChips = document.querySelectorAll('.quick-chip');
 
       /* SVG icons */
-      const ICON_TRASH = `
-        <polyline points="3 6 5 6 21 6"></polyline>
-        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-        <path d="M10 11v6"></path>
-        <path d="M14 11v6"></path>
-        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-      `;
       const ICON_PAUSE = `
         <rect x="7" y="5" width="3.5" height="14" rx="1"></rect>
         <rect x="13.5" y="5" width="3.5" height="14" rx="1"></rect>
@@ -1266,13 +1423,8 @@
           const startStr = item.startFormatted || '—';
           let resultClass = 'none';
           let resultText = '—';
-          if (item.result === 'reached') {
-            resultClass = 'ok';
-            resultText = '✅';
-          } else if (item.result === 'missed') {
-            resultClass = 'miss';
-            resultText = '⚠️';
-          }
+          if (item.result === 'reached') { resultClass = 'ok'; resultText = '✅'; }
+          else if (item.result === 'missed') { resultClass = 'miss'; resultText = '⚠️'; }
           return `
             <div class="history-item" data-index="${idx}">
               <div class="h-left">
@@ -1340,6 +1492,38 @@
         }
       }
 
+      /* ---------- CACHE CLEAR (wipe everything) ---------- */
+      function clearSiteCache() {
+        try {
+          // Clear localStorage keys
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(HISTORY_KEY);
+          localStorage.removeItem(INSTALL_DISMISS_KEY);
+          // Clear sessionStorage
+          sessionStorage.clear();
+          // Clear caches (service worker cache)
+          if ('caches' in window) {
+            caches.keys().then(names => {
+              names.forEach(name => caches.delete(name));
+            });
+          }
+          // Unregister service workers
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+              registrations.forEach(reg => reg.unregister());
+            });
+          }
+          // Reset UI
+          resetCurrentSession();
+          renderHistory();
+          closeCacheModal();
+          // Reload after a short delay to fully reset
+          setTimeout(() => { window.location.reload(); }, 800);
+        } catch (e) {
+          alert('Failed to clear cache: ' + e.message);
+        }
+      }
+
       /* ---------- storage ---------- */
       function saveState() {
         try {
@@ -1375,13 +1559,6 @@
           else { mode = 'idle'; }
           return true;
         } catch (e) { return false; }
-      }
-
-      function wipeLocalData() {
-        try {
-          localStorage.removeItem(STORAGE_KEY);
-          localStorage.removeItem(HISTORY_KEY);
-        } catch (e) {}
       }
 
       /* ---------- formatting ---------- */
@@ -1639,18 +1816,20 @@
         sessionEnd = null;
         elapsedSeconds = 0;
         accumulatedMs = 0;
-        // IMPORTANT: do NOT clear targetDurationSec, do NOT touch HISTORY_KEY
         mainDisplay.textContent = '00:00:00';
         mainDisplay.classList.remove('running', 'paused', 'stopped');
         updateTargetUI();
         updateToggleUI();
         updateFabUI();
-        saveState();  // saves reset state, but history remains untouched
+        saveState();
         closeResetModal();
       }
 
       function openResetModal() { resetModal.classList.add('show'); }
       function closeResetModal() { resetModal.classList.remove('show'); }
+
+      function openCacheModal() { cacheModal.classList.add('show'); }
+      function closeCacheModal() { cacheModal.classList.remove('show'); }
 
       /* ---------- toggle button ---------- */
       toggleBtn.addEventListener('click', () => {
@@ -1658,11 +1837,11 @@
         else stopTimer();
       });
 
-      /* ---------- FAB (now reset current session) ---------- */
+      /* ---------- FAB ---------- */
       fab.addEventListener('click', () => {
         if (mode === 'running') pauseTimer();
         else if (mode === 'paused') resumeTimer();
-        else openResetModal();  // reset confirmation
+        else openResetModal();
       });
 
       /* ---------- report modal buttons + tabs ---------- */
@@ -1734,14 +1913,20 @@
         closeTargetModal();
       });
 
-      /* ---------- reset modal (replaces delete modal) ---------- */
+      /* ---------- reset modal ---------- */
       cancelResetBtn.addEventListener('click', closeResetModal);
       resetModal.addEventListener('click', (e) => { if (e.target === resetModal) closeResetModal(); });
       confirmResetBtn.addEventListener('click', resetCurrentSession);
 
+      /* ---------- cache modal ---------- */
+      cancelCacheBtn.addEventListener('click', closeCacheModal);
+      cacheModal.addEventListener('click', (e) => { if (e.target === cacheModal) closeCacheModal(); });
+      confirmCacheBtn.addEventListener('click', clearSiteCache);
+
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           if (resetModal.classList.contains('show')) closeResetModal();
+          if (cacheModal.classList.contains('show')) closeCacheModal();
           if (targetModal.classList.contains('show')) closeTargetModal();
           if (reportModal.classList.contains('show')) closeReport();
         }
@@ -1751,6 +1936,7 @@
       downloadCsvBtn.addEventListener('click', downloadCSV);
       downloadJsonBtn.addEventListener('click', downloadJSON);
       clearHistoryBtn.addEventListener('click', clearHistory);
+      clearCacheBtn.addEventListener('click', openCacheModal);
 
       // Long-press on backup button to restore
       let backupPressTimer = null;
