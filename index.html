@@ -271,15 +271,15 @@
     .fab.resume:hover { background: #92400e; }
     .fab.resume svg { fill: currentColor; stroke: none; }
 
-    .fab.delete {
+    .fab.reset {
       background: white;
-      color: #b45309;
-      border-color: #fed7aa;
-      box-shadow: 0 10px 24px -8px rgba(180, 83, 9, 0.35),
+      color: #1e5a7a;
+      border-color: #cde0f0;
+      box-shadow: 0 10px 24px -8px rgba(30, 90, 122, 0.35),
                   0 4px 10px rgba(0, 0, 0, 0.06);
     }
-    .fab.delete:hover { background: #fff2e5; }
-    .fab.delete svg { stroke: currentColor; fill: none; }
+    .fab.reset:hover { background: #e6f0fa; }
+    .fab.reset svg { stroke: currentColor; fill: none; }
 
     .fab .fab-tip {
       position: absolute;
@@ -493,8 +493,8 @@
       width: 60px;
       height: 60px;
       border-radius: 50%;
-      background: #fff2e5;
-      color: #b45309;
+      background: #e6f0fa;
+      color: #1e5a7a;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -560,7 +560,6 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
-    /* current session report */
     .report-header {
       display: flex;
       align-items: center;
@@ -880,14 +879,12 @@
 
   <div class="version-corner" id="versionCorner">v2.0.0</div>
 
-  <button class="fab delete" id="fab" title="Delete">
-    <span class="fab-tip" id="fabTip">Delete</span>
+  <!-- FAB: now a RESET button (clears current session but keeps history) -->
+  <button class="fab reset" id="fab" title="Reset current session">
+    <span class="fab-tip" id="fabTip">Reset</span>
     <svg id="fabIcon" viewBox="0 0 24 24">
-      <polyline points="3 6 5 6 21 6"></polyline>
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-      <path d="M10 11v6"></path>
-      <path d="M14 11v6"></path>
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+      <path d="M3 3v5h5"></path>
     </svg>
   </button>
 
@@ -992,7 +989,6 @@
         </div>
         <div class="backup-hint">CSV & JSON include all history — restore by re-importing backup.</div>
 
-        <!-- hidden file input for restore -->
         <input type="file" id="restoreFileInput" accept=".json" style="display:none;">
       </div>
 
@@ -1003,23 +999,20 @@
     </div>
   </div>
 
-  <!-- DELETE MODAL -->
-  <div class="modal-overlay center" id="deleteModal">
+  <!-- RESET CONFIRMATION MODAL (replaces delete modal) -->
+  <div class="modal-overlay center" id="resetModal">
     <div class="modal-sheet modal-center">
       <div class="modal-icon">
         <svg viewBox="0 0 24 24">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-          <path d="M10 11v6"></path>
-          <path d="M14 11v6"></path>
-          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
         </svg>
       </div>
-      <h3>Clear all data?</h3>
-      <p>This will reset the timer, clear history, remove the target, and wipe saved state from this device.</p>
+      <h3>Reset current session?</h3>
+      <p>This will clear the timer display and current session data. Saved history will remain intact.</p>
       <div class="modal-actions">
-        <button class="modal-clear" id="cancelClear">Cancel</button>
-        <button class="modal-danger" id="confirmClear">Clear</button>
+        <button class="modal-clear" id="cancelReset">Cancel</button>
+        <button class="modal-danger" id="confirmReset">Reset</button>
       </div>
     </div>
   </div>
@@ -1034,7 +1027,7 @@
     const STORAGE_KEY = 'chronoPro.state';
     const HISTORY_KEY = 'chronoPro.history';
 
-    /* ---------- inline PWA manifest ---------- */
+    /* ---------- inline PWA manifest (with your logo) ---------- */
     (function injectManifest() {
       const manifest = {
         name: "Chrono", short_name: "Chrono",
@@ -1062,7 +1055,7 @@
       if (!('serviceWorker' in navigator)) return;
       const swCode = `
         const CACHE = 'chrono-${APP_VERSION}';
-        const ASSETS = ['./'];
+        const ASSETS = ['./', 'logo.png'];
         self.addEventListener('install', (event) => {
           event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS).catch(() => {})));
           self.skipWaiting();
@@ -1188,9 +1181,9 @@
       const clearHistoryBtn = document.getElementById('clearHistoryBtn');
       const restoreFileInput = document.getElementById('restoreFileInput');
 
-      const deleteModal = document.getElementById('deleteModal');
-      const cancelClearBtn = document.getElementById('cancelClear');
-      const confirmClearBtn = document.getElementById('confirmClear');
+      const resetModal = document.getElementById('resetModal');
+      const cancelResetBtn = document.getElementById('cancelReset');
+      const confirmResetBtn = document.getElementById('confirmReset');
 
       const fab = document.getElementById('fab');
       const fabIcon = document.getElementById('fabIcon');
@@ -1216,15 +1209,22 @@
       const ICON_PLAY = `
         <polygon points="7 4 20 12 7 20 7 4"></polygon>
       `;
+      const ICON_RESET = `
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+        <path d="M3 3v5h5"></path>
+      `;
 
       function setFabIcon(kind) {
-        fabIcon.innerHTML = kind === 'pause' ? ICON_PAUSE
-                          : kind === 'resume' ? ICON_PLAY
-                          : ICON_TRASH;
-        if (kind === 'pause' || kind === 'resume') {
+        if (kind === 'pause') {
+          fabIcon.innerHTML = ICON_PAUSE;
+          fabIcon.style.fill = 'currentColor';
+          fabIcon.style.stroke = 'none';
+        } else if (kind === 'resume') {
+          fabIcon.innerHTML = ICON_PLAY;
           fabIcon.style.fill = 'currentColor';
           fabIcon.style.stroke = 'none';
         } else {
+          fabIcon.innerHTML = ICON_RESET;
           fabIcon.style.fill = 'none';
           fabIcon.style.stroke = 'currentColor';
         }
@@ -1246,8 +1246,7 @@
 
       function addHistoryEntry(entry) {
         const history = loadHistory();
-        history.unshift(entry); // newest first
-        // keep max 500 entries to avoid bloat
+        history.unshift(entry);
         if (history.length > 500) history.length = 500;
         saveHistory(history);
         renderHistory();
@@ -1266,15 +1265,13 @@
           const durationStr = item.duration || '00:00:00';
           const startStr = item.startFormatted || '—';
           let resultClass = 'none';
-          let resultText = 'Stopped';
+          let resultText = '—';
           if (item.result === 'reached') {
             resultClass = 'ok';
             resultText = '✅';
           } else if (item.result === 'missed') {
             resultClass = 'miss';
             resultText = '⚠️';
-          } else {
-            resultText = '—';
           }
           return `
             <div class="history-item" data-index="${idx}">
@@ -1290,21 +1287,11 @@
 
       function downloadCSV() {
         const history = loadHistory();
-        if (history.length === 0) {
-          alert('No history to download.');
-          return;
-        }
+        if (history.length === 0) { alert('No history to download.'); return; }
         const headers = ['Start (ISO)', 'End (ISO)', 'Start (Formatted)', 'End (Formatted)', 'Duration (HH:MM:SS)', 'Duration (seconds)', 'Target (seconds)', 'Result', 'Session ID'];
         const rows = history.map(item => [
-          item.startISO || '',
-          item.endISO || '',
-          item.startFormatted || '',
-          item.endFormatted || '',
-          item.duration || '',
-          item.durationSeconds ?? '',
-          item.targetSeconds ?? 0,
-          item.result || 'stopped',
-          item.id || ''
+          item.startISO || '', item.endISO || '', item.startFormatted || '', item.endFormatted || '',
+          item.duration || '', item.durationSeconds ?? '', item.targetSeconds ?? 0, item.result || 'stopped', item.id || ''
         ]);
         const csvContent = [headers.join(','), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1318,16 +1305,8 @@
 
       function downloadJSON() {
         const history = loadHistory();
-        if (history.length === 0) {
-          alert('No history to back up.');
-          return;
-        }
-        const backup = {
-          app: 'Chrono',
-          version: APP_VERSION,
-          exportedAt: new Date().toISOString(),
-          history: history
-        };
+        if (history.length === 0) { alert('No history to back up.'); return; }
+        const backup = { app: 'Chrono', version: APP_VERSION, exportedAt: new Date().toISOString(), history: history };
         const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1349,9 +1328,7 @@
             } else {
               alert('❌ Invalid backup file: missing history array.');
             }
-          } catch (err) {
-            alert('❌ Failed to parse backup file.');
-          }
+          } catch (err) { alert('❌ Failed to parse backup file.'); }
         };
         reader.readAsText(file);
       }
@@ -1372,10 +1349,7 @@
             endTime: endTime ? endTime.getTime() : null,
             sessionStart: sessionStart ? sessionStart.getTime() : null,
             sessionEnd: sessionEnd ? sessionEnd.getTime() : null,
-            accumulatedMs,
-            elapsedSeconds,
-            targetDurationSec,
-            version: APP_VERSION
+            accumulatedMs, elapsedSeconds, targetDurationSec, version: APP_VERSION
           }));
         } catch (e) {}
       }
@@ -1386,7 +1360,6 @@
           if (!raw) return false;
           const s = JSON.parse(raw);
           if (!s) return false;
-
           if (s.startTime) startTime = new Date(s.startTime);
           if (s.endTime) endTime = new Date(s.endTime);
           if (s.sessionStart) sessionStart = new Date(s.sessionStart);
@@ -1394,17 +1367,12 @@
           accumulatedMs = s.accumulatedMs || 0;
           elapsedSeconds = s.elapsedSeconds || 0;
           targetDurationSec = s.targetDurationSec || 0;
-
           if (s.mode === 'running' && s.startTime) {
             mode = 'running';
             elapsedSeconds = Math.floor((accumulatedMs + (Date.now() - s.startTime.getTime())) / 1000);
-          } else if (s.mode === 'paused') {
-            mode = 'paused';
-          } else if (s.mode === 'stopped') {
-            mode = 'stopped';
-          } else {
-            mode = 'idle';
-          }
+          } else if (s.mode === 'paused') { mode = 'paused'; }
+          else if (s.mode === 'stopped') { mode = 'stopped'; }
+          else { mode = 'idle'; }
           return true;
         } catch (e) { return false; }
       }
@@ -1412,9 +1380,7 @@
       function wipeLocalData() {
         try {
           localStorage.removeItem(STORAGE_KEY);
-          Object.keys(localStorage).forEach(k => {
-            if (k.toLowerCase().includes('chrono')) localStorage.removeItem(k);
-          });
+          localStorage.removeItem(HISTORY_KEY);
         } catch (e) {}
       }
 
@@ -1480,7 +1446,7 @@
       }
 
       function updateFabUI() {
-        fab.classList.remove('pause', 'resume', 'delete');
+        fab.classList.remove('pause', 'resume', 'reset');
         if (mode === 'running') {
           fab.classList.add('pause');
           fabTip.textContent = 'Pause';
@@ -1490,9 +1456,9 @@
           fabTip.textContent = 'Resume';
           setFabIcon('resume');
         } else {
-          fab.classList.add('delete');
-          fabTip.textContent = 'Delete';
-          setFabIcon('delete');
+          fab.classList.add('reset');
+          fabTip.textContent = 'Reset current';
+          setFabIcon('reset');
         }
       }
 
@@ -1513,18 +1479,13 @@
         minutesInput.value = m;
         secondsInput.value = s;
         quickChips.forEach(chip => {
-          chip.classList.toggle('active',
-            parseInt(chip.dataset.sec, 10) === targetDurationSec && targetDurationSec > 0);
+          chip.classList.toggle('active', parseInt(chip.dataset.sec, 10) === targetDurationSec && targetDurationSec > 0);
         });
       }
 
       /* ---------- report popup ---------- */
       function showReport() {
-        if (!sessionStart || !sessionEnd) {
-          console.warn('[report] missing session data', { sessionStart, sessionEnd });
-          return;
-        }
-
+        if (!sessionStart || !sessionEnd) return;
         const totalSec = elapsedSeconds;
         reportTotalTime.textContent = secondsToHMS(totalSec);
         reportTotalHuman.textContent = humanDuration(totalSec);
@@ -1558,7 +1519,6 @@
           reportStatus.classList.remove('miss');
         }
 
-        // Save to history
         const entry = {
           id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
           startISO: sessionStart.toISOString(),
@@ -1572,13 +1532,8 @@
           savedAt: new Date().toISOString()
         };
         addHistoryEntry(entry);
-
-        // Switch to current tab on open
         switchTab('current');
-
-        requestAnimationFrame(() => {
-          reportModal.classList.add('show');
-        });
+        requestAnimationFrame(() => { reportModal.classList.add('show'); });
       }
 
       function closeReport() { reportModal.classList.remove('show'); }
@@ -1646,25 +1601,18 @@
         if (mode === 'running' && startTime) {
           accumulatedMs += Date.now() - startTime.getTime();
           elapsedSeconds = Math.floor(accumulatedMs / 1000);
-        } else if (mode !== 'paused') {
-          return;
-        }
-
+        } else if (mode !== 'paused') { return; }
         clearInterval(timerInterval);
         timerInterval = null;
-
         sessionEnd = new Date();
         if (!sessionStart) sessionStart = sessionEnd;
-
         endTime = sessionEnd;
         mode = 'stopped';
         startTime = null;
-
         updateMainDisplay();
         updateToggleUI();
         updateFabUI();
         saveState();
-
         showReport();
       }
 
@@ -1680,40 +1628,55 @@
         }
       }
 
+      /* ---------- RESET CURRENT SESSION (keeps history) ---------- */
+      function resetCurrentSession() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        mode = 'idle';
+        startTime = null;
+        endTime = null;
+        sessionStart = null;
+        sessionEnd = null;
+        elapsedSeconds = 0;
+        accumulatedMs = 0;
+        // IMPORTANT: do NOT clear targetDurationSec, do NOT touch HISTORY_KEY
+        mainDisplay.textContent = '00:00:00';
+        mainDisplay.classList.remove('running', 'paused', 'stopped');
+        updateTargetUI();
+        updateToggleUI();
+        updateFabUI();
+        saveState();  // saves reset state, but history remains untouched
+        closeResetModal();
+      }
+
+      function openResetModal() { resetModal.classList.add('show'); }
+      function closeResetModal() { resetModal.classList.remove('show'); }
+
       /* ---------- toggle button ---------- */
       toggleBtn.addEventListener('click', () => {
         if (mode === 'idle' || mode === 'stopped') startFresh();
         else stopTimer();
       });
 
-      /* ---------- FAB ---------- */
+      /* ---------- FAB (now reset current session) ---------- */
       fab.addEventListener('click', () => {
         if (mode === 'running') pauseTimer();
         else if (mode === 'paused') resumeTimer();
-        else deleteModal.classList.add('show');
+        else openResetModal();  // reset confirmation
       });
 
       /* ---------- report modal buttons + tabs ---------- */
       reportCloseBtn.addEventListener('click', closeReport);
-      reportRestartBtn.addEventListener('click', () => {
-        closeReport();
-        startFresh();
-      });
-      reportModal.addEventListener('click', (e) => {
-        if (e.target === reportModal) closeReport();
-      });
-
+      reportRestartBtn.addEventListener('click', () => { closeReport(); startFresh(); });
+      reportModal.addEventListener('click', (e) => { if (e.target === reportModal) closeReport(); });
       tabCurrentBtn.addEventListener('click', () => switchTab('current'));
       tabHistoryBtn.addEventListener('click', () => switchTab('history'));
 
       /* ---------- target modal ---------- */
       function openTargetModal() { targetModal.classList.add('show'); }
       function closeTargetModal() { targetModal.classList.remove('show'); }
-
       filterBtn.addEventListener('click', openTargetModal);
-      targetModal.addEventListener('click', (e) => {
-        if (e.target === targetModal) closeTargetModal();
-      });
+      targetModal.addEventListener('click', (e) => { if (e.target === targetModal) closeTargetModal(); });
 
       quickChips.forEach(chip => {
         chip.addEventListener('click', () => {
@@ -1771,45 +1734,17 @@
         closeTargetModal();
       });
 
-      /* ---------- delete modal ---------- */
-      function closeDeleteModal() { deleteModal.classList.remove('show'); }
-      cancelClearBtn.addEventListener('click', closeDeleteModal);
-      deleteModal.addEventListener('click', (e) => {
-        if (e.target === deleteModal) closeDeleteModal();
-      });
+      /* ---------- reset modal (replaces delete modal) ---------- */
+      cancelResetBtn.addEventListener('click', closeResetModal);
+      resetModal.addEventListener('click', (e) => { if (e.target === resetModal) closeResetModal(); });
+      confirmResetBtn.addEventListener('click', resetCurrentSession);
+
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-          if (deleteModal.classList.contains('show')) closeDeleteModal();
+          if (resetModal.classList.contains('show')) closeResetModal();
           if (targetModal.classList.contains('show')) closeTargetModal();
           if (reportModal.classList.contains('show')) closeReport();
         }
-      });
-
-      confirmClearBtn.addEventListener('click', () => {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        mode = 'idle';
-        startTime = null;
-        endTime = null;
-        sessionStart = null;
-        sessionEnd = null;
-        elapsedSeconds = 0;
-        accumulatedMs = 0;
-        targetDurationSec = 0;
-
-        wipeLocalData();
-
-        mainDisplay.textContent = '00:00:00';
-        mainDisplay.classList.remove('running', 'paused', 'stopped');
-        hoursInput.value = 0;
-        minutesInput.value = 0;
-        secondsInput.value = 0;
-
-        updateTargetUI();
-        updateToggleUI();
-        updateFabUI();
-        renderHistory();
-        closeDeleteModal();
       });
 
       /* ---------- download / backup / restore / clear history ---------- */
@@ -1817,32 +1752,14 @@
       downloadJsonBtn.addEventListener('click', downloadJSON);
       clearHistoryBtn.addEventListener('click', clearHistory);
 
-      /* hidden restore trigger: double-tap on history count? We'll add a long-press on download button */
-      // Simple: long-press on the backup button to restore (press and hold 800ms)
+      // Long-press on backup button to restore
       let backupPressTimer = null;
-      downloadJsonBtn.addEventListener('mousedown', () => {
-        backupPressTimer = setTimeout(() => {
-          restoreFileInput.click();
-        }, 800);
-      });
-      downloadJsonBtn.addEventListener('mouseup', () => {
-        clearTimeout(backupPressTimer);
-      });
-      downloadJsonBtn.addEventListener('mouseleave', () => {
-        clearTimeout(backupPressTimer);
-      });
-      // Touch support
-      downloadJsonBtn.addEventListener('touchstart', (e) => {
-        backupPressTimer = setTimeout(() => {
-          restoreFileInput.click();
-        }, 800);
-      }, { passive: true });
-      downloadJsonBtn.addEventListener('touchend', () => {
-        clearTimeout(backupPressTimer);
-      });
-      downloadJsonBtn.addEventListener('touchcancel', () => {
-        clearTimeout(backupPressTimer);
-      });
+      downloadJsonBtn.addEventListener('mousedown', () => { backupPressTimer = setTimeout(() => restoreFileInput.click(), 800); });
+      downloadJsonBtn.addEventListener('mouseup', () => clearTimeout(backupPressTimer));
+      downloadJsonBtn.addEventListener('mouseleave', () => clearTimeout(backupPressTimer));
+      downloadJsonBtn.addEventListener('touchstart', (e) => { backupPressTimer = setTimeout(() => restoreFileInput.click(), 800); }, { passive: true });
+      downloadJsonBtn.addEventListener('touchend', () => clearTimeout(backupPressTimer));
+      downloadJsonBtn.addEventListener('touchcancel', () => clearTimeout(backupPressTimer));
 
       restoreFileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -1865,9 +1782,7 @@
         renderHistory();
         const loaded = loadState();
         if (loaded) {
-          if (mode === 'running' && startTime) {
-            timerInterval = setInterval(tick, 200);
-          }
+          if (mode === 'running' && startTime) timerInterval = setInterval(tick, 200);
           updateTargetUI();
           updateMainDisplay();
           updateToggleUI();
