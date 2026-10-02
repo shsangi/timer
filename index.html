@@ -1208,7 +1208,7 @@
         .catch((err) => console.warn('[PWA] SW failed:', err));
     })();
 
-    /* ---------- install prompt + top banner ---------- */
+    /* ---------- install prompt + top banner (FIXED) ---------- */
     (function installPrompt() {
       let deferredPrompt = null;
       const installBtn = document.getElementById('installBtn');
@@ -1221,7 +1221,6 @@
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                           window.navigator.standalone === true;
 
-      // Show top banner for new users (not dismissed + not installed)
       function shouldShowBanner() {
         if (isStandalone) return false;
         try {
@@ -1230,7 +1229,6 @@
       }
 
       if (shouldShowBanner()) {
-        // Show after a short delay
         setTimeout(() => {
           installBanner.classList.add('show');
           document.body.classList.add('has-banner');
@@ -1247,7 +1245,6 @@
         e.preventDefault();
         deferredPrompt = e;
         installBtn.classList.add('visible');
-        // If banner is showing, keep it; otherwise show toast after 3s
         if (!installBanner.classList.contains('show')) {
           setTimeout(() => {
             if (deferredPrompt && !isStandalone) installToast.classList.add('show');
@@ -1255,13 +1252,28 @@
         }
       });
 
+      // FIXED: Does NOT show an alert. Only triggers install if prompt is available.
+      // If not available, we just show a helpful toast message instead.
       const triggerInstall = async () => {
         if (!deferredPrompt) {
-          const ua = navigator.userAgent;
-          let msg = 'To install: open browser menu and choose "Install app".';
-          if (/iPhone|iPad|iPod/i.test(ua)) msg = 'To install: tap Share in Safari, then "Add to Home Screen".';
-          else if (/Android/i.test(ua)) msg = 'To install: tap browser menu (⋮), then "Install app".';
-          alert(msg);
+          // Show a temporary toast instead of an annoying alert
+          const toast = document.getElementById('installToast');
+          const toastBtn = document.getElementById('installToastBtn');
+          const originalText = toast.querySelector('span').textContent;
+          const originalBtnText = toastBtn.textContent;
+
+          toast.querySelector('span').textContent = 'Use browser menu ⋮ → "Install app"';
+          toastBtn.textContent = 'OK';
+          toast.classList.add('show');
+
+          const dismissToast = () => {
+            toast.classList.remove('show');
+            toast.querySelector('span').textContent = originalText;
+            toastBtn.textContent = originalBtnText;
+            toastBtn.removeEventListener('click', dismissToast);
+          };
+          toastBtn.addEventListener('click', dismissToast);
+          setTimeout(dismissToast, 4000);
           return;
         }
         deferredPrompt.prompt();
@@ -1495,29 +1507,23 @@
       /* ---------- CACHE CLEAR (wipe everything) ---------- */
       function clearSiteCache() {
         try {
-          // Clear localStorage keys
           localStorage.removeItem(STORAGE_KEY);
           localStorage.removeItem(HISTORY_KEY);
           localStorage.removeItem(INSTALL_DISMISS_KEY);
-          // Clear sessionStorage
           sessionStorage.clear();
-          // Clear caches (service worker cache)
           if ('caches' in window) {
             caches.keys().then(names => {
               names.forEach(name => caches.delete(name));
             });
           }
-          // Unregister service workers
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
               registrations.forEach(reg => reg.unregister());
             });
           }
-          // Reset UI
           resetCurrentSession();
           renderHistory();
           closeCacheModal();
-          // Reload after a short delay to fully reset
           setTimeout(() => { window.location.reload(); }, 800);
         } catch (e) {
           alert('Failed to clear cache: ' + e.message);
